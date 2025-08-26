@@ -3,130 +3,55 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escape Room: Das Geheimnis des Schlosses</title>
+    <title>Escape Room Bestenliste</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
         body {
             font-family: 'Inter', sans-serif;
         }
-        .game-container {
-            flex: 1;
-            max-width: 600px;
-        }
     </style>
 </head>
 <body class="bg-gray-900 text-gray-100 flex items-center justify-center min-h-screen p-4">
 
-    <!-- Hauptspiel-UI -->
-    <div class="bg-gray-800 p-8 md:p-12 rounded-2xl shadow-2xl game-container text-center border-2 border-gray-700">
-        <h1 id="welcome-message" class="text-3xl md:text-4xl font-bold text-teal-400 mb-2">Willkommen beim Escape Room</h1>
-        <p class="text-gray-400 mb-8">Lösen Sie das Rätsel, um die Zeit zu stoppen!</p>
+    <div class="bg-gray-800 p-8 md:p-12 rounded-2xl shadow-2xl w-full max-w-4xl text-center border-2 border-gray-700">
+        <h1 class="text-4xl md:text-5xl font-bold text-lime-400 mb-2">Bestenliste</h1>
+        <p class="text-gray-400 mb-8">Live-Ranking nach Phasen</p>
 
-        <!-- Start-Bildschirm -->
-        <div id="start-screen" class="space-y-6">
-            <input type="text" id="playerName" placeholder="Gib deinen Teamnamen ein..."
-                   class="w-full p-3 rounded-lg bg-gray-600 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all duration-300">
-            <button id="startButton"
-                    class="w-full px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg shadow-md transition-all duration-300 transform hover:scale-105">
-                Spiel starten
-            </button>
-        </div>
+        <div id="loading" class="text-xl text-gray-400">Lade Bestenliste...</div>
 
-        <!-- Spiel-UI (versteckt bis Spielstart) -->
-        <div id="game-ui" class="space-y-6 hidden">
-            <!-- Anzeige für Mission und Fortschritt -->
-            <div class="bg-gray-700 p-4 rounded-xl">
-                <h2 class="text-xl md:text-2xl font-semibold text-gray-200 mb-2">Aktuelle Mission: <span id="mission-display">1</span></h2>
-                <div class="text-gray-300">Gelöste Aufgaben: <span id="progress-display">0/3</span></div>
+        <div id="scoreboard-container" class="space-y-8 hidden">
+            <!-- Mission 1 Sektion -->
+            <div>
+                <h2 class="text-3xl font-semibold text-teal-400 mb-4">Mission 1</h2>
+                <div id="mission1-phases" class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <!-- Phasen werden hier dynamisch eingefügt -->
+                </div>
             </div>
 
-            <div class="bg-gray-700 p-4 rounded-xl">
-                <h2 class="text-xl md:text-2xl font-semibold text-gray-200 mb-2">Verstrichene Zeit:</h2>
-                <div id="timer" class="text-5xl md:text-6xl font-extrabold text-lime-400 tracking-wide transition-colors duration-500">00:00</div>
-            </div>
-
-            <div class="bg-gray-700 p-4 rounded-xl flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
-                <input type="text" id="loesung" placeholder="Geben Sie hier Ihre Lösung ein"
-                       class="flex-grow p-3 rounded-lg bg-gray-600 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all duration-300">
-                <button id="checkButton"
-                        class="w-full md:w-auto px-6 py-3 bg-teal-500 hover:bg-teal-600 text-white font-bold rounded-lg shadow-md transition-all duration-300 transform hover:scale-105">
-                    Lösung prüfen
-                </button>
-            </div>
-            
-            <div class="bg-gray-700 p-4 rounded-xl">
-                <button id="tipButton"
-                        class="w-full px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-lg shadow-md transition-all duration-300 transform hover:scale-105">
-                    Tipp holen (+<span id="tip-cost-display">30s</span>)
-                </button>
+            <!-- Mission 2 Sektion -->
+            <div>
+                <h2 class="text-3xl font-semibold text-teal-400 mb-4">Mission 2</h2>
+                <div id="mission2-phases" class="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <!-- Phasen werden hier dynamisch eingefügt -->
+                </div>
             </div>
         </div>
 
-        <div id="message" class="mt-8 p-4 rounded-lg text-white font-semibold hidden"></div>
     </div>
 
     <script type="module">
-        // Importiere die benötigten Firebase-Module für die Datenspeicherung
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { getFirestore, collection, query, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         document.addEventListener('DOMContentLoaded', async () => {
-            const welcomeMessageElement = document.getElementById('welcome-message');
-            const playerNameInput = document.getElementById('playerName');
-            const startButton = document.getElementById('startButton');
-            const startScreen = document.getElementById('start-screen');
-            const gameUI = document.getElementById('game-ui');
-            const timerElement = document.getElementById('timer');
-            const loesungInput = document.getElementById('loesung');
-            const checkButton = document.getElementById('checkButton');
-            const tipButton = document.getElementById('tipButton');
-            const messageElement = document.getElementById('message');
-            const missionDisplay = document.getElementById('mission-display');
-            const progressDisplay = document.getElementById('progress-display');
-            const tipCostDisplay = document.getElementById('tip-cost-display');
+            const loadingElement = document.getElementById('loading');
+            const scoreboardContainer = document.getElementById('scoreboard-container');
+            const mission1Container = document.getElementById('mission1-phases');
+            const mission2Container = document.getElementById('mission2-phases');
 
-            // Spielstatus-Variablen
-            let timeInSeconds = 0; // Timer startet bei 0 und zählt hoch
-            let phaseStartTime = 0; // Startzeit für jede Phase
-            let timerInterval;
-            let currentMission = 1;
-            let solutionsSolved = 0;
-            let tipsGivenForCurrentSolution = 0;
-            const MAX_TIME = 60 * 60; // 60 Minuten in Sekunden
-            let db, auth;
-
-            // Definition der Lösungen für jede Mission
-            const missionSolutions = {
-                1: ['21490', '12148', '01912'], // 3 Lösungen für Mission 1
-                2: ['buch', 'spiegel', 'bild', 'uhr', 'diamant'] // 5 Lösungen für Mission 2
-            };
-
-            // Tipp-Texte für jede Lösung (jeweils bis zu 8 Tipps)
-            const missionTips = {
-                1: [
-                    // Tipps für Lösung 1 (Phase 1: 21490)
-                    ['Tipp 1.1: Es geht um das Morse-Alphabet. Das ausgedruckte Dokument enthält eine Übersetzungstabelle.', 'Tipp 1.2: Verwenden Sie die Morse-Tabelle, um die Zeichen zu übersetzen. Das erste Zeichen ist ein "Z".', 'Tipp 1.3: In jeder Zeile wird eine Zahl buchstabiert. In der ersten Zeile: "ZWEI".', 'Tipp 1.4: Arbeiten Sie sich langsam durch den Morse-Code. Die zweite Reihe bedeutet "EINS".', 'Tipp 1.5: Es gibt nicht viele Zahlen, die mit "V" und "N" anfangen. Die dritte Reihe ist "VIER".', 'Tipp 1.6: Die vierte Reihe ist "NEUN".', 'Tipp 1.7: Sie sollten insgesamt fünf Ziffern decodiert haben.', 'Tipp 1.8: Der Code ist "21490".'],
-                    // Tipps für Lösung 2 (Phase 2: 12148)
-                    ['Tipp 2.1: Der Code ist in dem Puzzle versteckt. Schneiden Sie die Teile aus.', 'Tipp 2.2: Orientieren Sie sich an der dicken, schwarzen Umrandung.', 'Tipp 2.3: Die erste Zeile des Puzzles ergibt "CODE:".', 'Tipp 2.4: Die Zahl unten links ist eine "1".', 'Tipp 2.5: Die einzige Zahl, die neben die "1" passt, ist die "2".', 'Tipp 2.6: Eine weitere "1" folgt der "2".', 'Tipp 2.7: Die vierte Zahl ist eine "4".', 'Tipp 2.8: Die letzte Ziffer ist eine "8". Der vollständige Code lautet "12148".'],
-                    // Tipps für Lösung 3 (Phase 3: 01912)
-                    ['Tipp 3.1: Es scheint kein normales Rätsel zu sein. "21610" ist nicht der gesuchte Code.', 'Tipp 3.2: Beachten Sie die Striche und Punkte oberhalb und unterhalb der Zahl.', 'Tipp 3.3: Die Striche und Punkte sind Morse-Codes. Der obere Code bedeutet "UNTEN".', 'Tipp 3.4: Der untere Morse-Code bedeutet "OBEN".', 'Tipp 3.5: Die Positionen von "OBEN" und "UNTEN" sind vertauscht.', 'Tipp 3.6: Versuchen Sie, das Papier zu drehen und den Code auf dem Kopf stehend zu lesen.', 'Tipp 3.7: Auf dem Kopf stehend gelesen steht dort "01912".', 'Tipp 3.8: Der Code ist "01912".']
-                ],
-                2: [
-                    // Tipps für Mission 2 (5 Lösungen * 8 Tipps)
-                    ['Tipp 1.1', 'Tipp 1.2', 'Tipp 1.3', 'Tipp 1.4', 'Tipp 1.5', 'Tipp 1.6', 'Tipp 1.7', 'Tipp 1.8'],
-                    ['Tipp 2.1', 'Tipp 2.2', 'Tipp 2.3', 'Tipp 2.4', 'Tipp 2.5', 'Tipp 2.6', 'Tipp 2.7', 'Tipp 2.8'],
-                    ['Tipp 3.1', 'Tipp 3.2', 'Tipp 3.3', 'Tipp 3.4', 'Tipp 3.5', 'Tipp 3.6', 'Tipp 3.7', 'Tipp 3.8'],
-                    ['Tipp 4.1', 'Tipp 4.2', 'Tipp 4.3', 'Tipp 4.4', 'Tipp 4.5', 'Tipp 4.6', 'Tipp 4.7', 'Tipp 4.8'],
-                    ['Tipp 5.1', 'Tipp 5.2', 'Tipp 5.3', 'Tipp 5.4', 'Tipp 5.5', 'Tipp 5.6', 'Tipp 5.7', 'Tipp 5.8']
-                ]
-            };
-
-            // Tipp-Kosten: 30s, 1m, 1m 30s, 2m, 3m, 4m, 5m, 6m
-            const tipCosts = [30, 60, 90, 120, 180, 240, 300, 360];
-
-            // Initialisiere Firebase und authentifiziere den Benutzer
+            // Firebase Initialisierung
             const firebaseConfig = {
                 apiKey: "AIzaSyC1IonsQ6OTAz41k8V4JtEzgwReU9fPmhk",
                 authDomain: "escape-c96da.firebaseapp.com",
@@ -137,191 +62,79 @@
             };
 
             const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+            const db = getFirestore(app);
+            const auth = getAuth(app);
             const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
             try {
-                // Anonyme Anmeldung ist ausreichend, da Daten in einen öffentlichen Bereich geschrieben werden
+                // Anonyme Anmeldung ist ausreichend, da nur Leserechte benötigt werden
                 await signInAnonymously(auth);
             } catch (error) {
-                console.error("Firebase initialization or authentication failed:", error);
+                console.error("Firebase authentication failed:", error);
+                loadingElement.textContent = "Fehler beim Laden der Bestenliste.";
+                return;
             }
 
-            function startTimer() {
-                timerInterval = setInterval(() => {
-                    timeInSeconds++;
-                    updateTimerDisplay();
+            // Reference zur öffentlichen Game-Results-Sammlung
+            const resultsCollectionRef = collection(db, `artifacts/${appId}/public/data/game-results`);
 
-                    // Überprüfen, ob die maximale Zeit überschritten wurde
-                    if (timeInSeconds >= MAX_TIME) {
-                        endGame('time_up');
-                    }
-                }, 1000);
-            }
-
-            function updateTimerDisplay() {
-                const minutes = Math.floor(timeInSeconds / 60);
-                const seconds = timeInSeconds % 60;
-                timerElement.textContent = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-            }
-
-            function updateProgressDisplay() {
-                progressDisplay.textContent = `${solutionsSolved}/${missionSolutions[currentMission].length}`;
-                updateTipButtonText();
-            }
-            
-            function updateTipButtonText() {
-                const currentTips = missionTips[currentMission][solutionsSolved];
-                const nextTipIndex = tipsGivenForCurrentSolution;
-                if (nextTipIndex < currentTips.length) {
-                    const costInSeconds = tipCosts[nextTipIndex];
-                    const minutes = Math.floor(costInSeconds / 60);
-                    const seconds = costInSeconds % 60;
-                    let costString = '';
-                    if (minutes > 0) {
-                        costString += `${minutes}m`;
-                    }
-                    if (seconds > 0) {
-                        if (costString) {
-                            costString += ' ';
-                        }
-                        costString += `${seconds}s`;
-                    }
-                    tipButton.innerHTML = `Tipp holen (+<span id="tip-cost-display">${costString}</span>)`;
-                } else {
-                    tipButton.textContent = 'Keine Tipps mehr verfügbar';
-                    tipButton.disabled = true;
-                    tipButton.classList.add('opacity-50', 'cursor-not-allowed');
-                }
-            }
-
-            function showMessage(msg, type) {
-                messageElement.textContent = msg;
-                messageElement.className = 'mt-8 p-4 rounded-lg text-white font-semibold';
-                messageElement.classList.add(type);
-                messageElement.classList.remove('hidden');
-            }
-
-            function disableButtons() {
-                checkButton.disabled = true;
-                tipButton.disabled = true;
-                checkButton.classList.add('opacity-50', 'cursor-not-allowed');
-                tipButton.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-
-            function endGame(reason) {
-                clearInterval(timerInterval);
-                disableButtons();
-                if (reason === 'time_up') {
-                    showMessage('Die Zeit ist abgelaufen! Sie haben das Zeitlimit von 60 Minuten überschritten. Spiel vorbei.', 'bg-red-600');
-                } else {
-                    const finalTime = timerElement.textContent;
-                    showMessage(`Herzlichen Glückwunsch! Sie haben den Escape Room in ${finalTime} gelöst!`, 'bg-green-600');
-                }
-            }
-
-            // Lösung prüfen
-            checkButton.addEventListener('click', async () => {
-                const loesung = loesungInput.value.trim().toLowerCase();
-                const expectedSolution = missionSolutions[currentMission][solutionsSolved];
-                const playerName = playerNameInput.value.trim();
-
-                if (loesung === expectedSolution) {
-                    const phaseDuration = timeInSeconds - phaseStartTime;
-                    
-                    const newResult = {
-                        mission: currentMission,
-                        phase: solutionsSolved + 1,
-                        time: phaseDuration,
-                        playerName: playerName || 'Anonym',
-                        timestamp: new Date().toISOString()
-                    };
-
-                    // Speichere das Ergebnis in Firestore in einem öffentlichen Pfad
-                    try {
-                        const publicResultsCollectionRef = collection(db, `artifacts/${appId}/public/data/game-results`);
-                        await addDoc(publicResultsCollectionRef, newResult);
-                        console.log("Ergebnis in Firestore gespeichert.");
-                    } catch (e) {
-                        console.error("Fehler beim Hinzufügen des Dokuments: ", e);
-                        showMessage("Fehler beim Speichern des Ergebnisses.", 'bg-red-600');
-                    }
-                    
-                    phaseStartTime = timeInSeconds; // Setze die Startzeit für die nächste Phase zurück
-
-                    solutionsSolved++;
-                    tipsGivenForCurrentSolution = 0; // Setze Tipps für die nächste Lösung zurück
-                    showMessage(`Richtig! "${loesung}" war die korrekte Lösung.`, 'bg-green-600');
-                    loesungInput.value = '';
-                    updateProgressDisplay();
-                    
-                    if (solutionsSolved === missionSolutions[currentMission].length) {
-                        // Mission abgeschlossen
-                        if (currentMission === 1) {
-                            showMessage('Mission 1 abgeschlossen! Bereit für die nächste Herausforderung.', 'bg-teal-600');
-                            currentMission = 2;
-                            solutionsSolved = 0;
-                            missionDisplay.textContent = currentMission;
-                            setTimeout(updateProgressDisplay, 500); // UI-Update mit leichter Verzögerung
-                        } else if (currentMission === 2) {
-                            // Spielende
-                            endGame('mission_complete');
-                        }
-                    }
-                } else {
-                    showMessage('Falsche Lösung, versuchen Sie es noch einmal.', 'bg-red-600');
-                    loesungInput.value = '';
-                }
-            });
-
-            // Tipp holen
-            tipButton.addEventListener('click', () => {
-                const currentTips = missionTips[currentMission][solutionsSolved];
+            // Live-Update der Bestenliste
+            onSnapshot(resultsCollectionRef, (snapshot) => {
+                loadingElement.classList.add('hidden');
+                scoreboardContainer.classList.remove('hidden');
                 
-                if (tipsGivenForCurrentSolution < currentTips.length) {
-                    const costInSeconds = tipCosts[tipsGivenForCurrentSolution];
-                    timeInSeconds += costInSeconds;
-                    
-                    const minutes = Math.floor(costInSeconds / 60);
-                    const seconds = costInSeconds % 60;
-                    let costString = '';
-                    if (minutes > 0) {
-                        costString += `${minutes}m`;
-                    }
-                    if (seconds > 0) {
-                        if (costString) {
-                            costString += ' ';
-                        }
-                        costString += `${seconds}s`;
-                    }
-                    
-                    showMessage(`Ein Tipp wurde gewährt! ${costString} wurden zur Zeit hinzugefügt. ${currentTips[tipsGivenForCurrentSolution]}`, 'bg-yellow-600');
-                    tipsGivenForCurrentSolution++;
-                    updateTimerDisplay();
-                    updateTipButtonText();
-                } else {
-                    showMessage('Es gibt keine weiteren Tipps für diese Mission.', 'bg-red-600');
-                }
-            });
+                // Ergebnisse für jede Phase und Mission verfolgen
+                const rankings = {};
 
-            // Spielstart
-            startButton.addEventListener('click', () => {
-                const playerName = playerNameInput.value.trim();
-                if (playerName) {
-                    welcomeMessageElement.textContent = `Willkommen, ${playerName}!`;
-                    startScreen.classList.add('hidden');
-                    gameUI.classList.remove('hidden');
-                    startTimer();
-                    phaseStartTime = timeInSeconds;
-                } else {
-                    showMessage('Bitte geben Sie einen Namen ein, um das Spiel zu starten.', 'bg-red-600');
-                }
-            });
+                snapshot.docs.forEach(doc => {
+                    const result = doc.data();
+                    const { mission, phase, time, playerName } = result;
 
-            // Initialisierung bei Laden der Seite
-            updateProgressDisplay();
+                    if (!rankings[mission]) {
+                        rankings[mission] = {};
+                    }
+                    if (!rankings[mission][phase] || time < rankings[mission][phase].time) {
+                        rankings[mission][phase] = { time, playerName };
+                    }
+                });
+
+                // Mission 1 Rendering
+                mission1Container.innerHTML = '';
+                for (let i = 1; i <= 3; i++) {
+                    const phaseData = rankings['1']?.[i];
+                    const bestTimeText = phaseData ? `${Math.floor(phaseData.time / 60)}m ${phaseData.time % 60}s` : '—';
+                    const bestPlayerText = phaseData ? phaseData.playerName : 'Noch kein Team';
+                    
+                    const phaseDiv = document.createElement('div');
+                    phaseDiv.className = 'bg-gray-700 p-6 rounded-xl shadow-md transition-all duration-300 transform hover:scale-105';
+                    phaseDiv.innerHTML = `
+                        <h3 class="text-xl font-semibold mb-2">Phase ${i}</h3>
+                        <div class="text-lime-400 font-extrabold text-3xl md:text-4xl">${bestTimeText}</div>
+                        <div class="text-gray-300 mt-2">Team: ${bestPlayerText}</div>
+                    `;
+                    mission1Container.appendChild(phaseDiv);
+                }
+
+                // Mission 2 Rendering
+                mission2Container.innerHTML = '';
+                for (let i = 1; i <= 5; i++) {
+                    const phaseData = rankings['2']?.[i];
+                    const bestTimeText = phaseData ? `${Math.floor(phaseData.time / 60)}m ${phaseData.time % 60}s` : '—';
+                    const bestPlayerText = phaseData ? phaseData.playerName : 'Noch kein Team';
+                    
+                    const phaseDiv = document.createElement('div');
+                    phaseDiv.className = 'bg-gray-700 p-6 rounded-xl shadow-md transition-all duration-300 transform hover:scale-105';
+                    phaseDiv.innerHTML = `
+                        <h3 class="text-xl font-semibold mb-2">Phase ${i}</h3>
+                        <div class="text-lime-400 font-extrabold text-3xl md:text-4xl">${bestTimeText}</div>
+                        <div class="text-gray-300 mt-2">Team: ${bestPlayerText}</div>
+                    `;
+                    mission2Container.appendChild(phaseDiv);
+                }
+            }, (error) => {
+                console.error("Failed to fetch scoreboard data:", error);
+                loadingElement.textContent = "Fehler beim Laden der Bestenliste. Bitte die Konsole überprüfen.";
+            });
         });
     </script>
 </body>
