@@ -168,8 +168,8 @@
                 ]
             };
 
-            // Tipp-Kosten: 30s, 1m, 2m, 3m, 5m, 7m, 9m, 15m
-            const tipCosts = [30, 60, 120, 180, 300, 420, 540, 900];
+            // Tipp-Kosten: 30s, 1m, 1m 30s, 2m, 3m, 4m, 5m, 6m
+            const tipCosts = [30, 60, 90, 120, 180, 240, 300, 360];
 
             function startTimer() {
                 timerInterval = setInterval(() => {
@@ -246,7 +246,16 @@
                     const costInSeconds = tipCosts[nextTipIndex];
                     const minutes = Math.floor(costInSeconds / 60);
                     const seconds = costInSeconds % 60;
-                    const costString = (minutes > 0 ? `${minutes}m` : '') + (seconds > 0 ? `${seconds}s` : '');
+                    let costString = '';
+                    if (minutes > 0) {
+                        costString += `${minutes}m`;
+                    }
+                    if (seconds > 0) {
+                        if (costString) {
+                            costString += ' ';
+                        }
+                        costString += `${seconds}s`;
+                    }
                     tipButton.innerHTML = `Tipp holen (+<span id="tip-cost-display">${costString}</span>)`;
                 } else {
                     tipButton.textContent = 'Keine Tipps mehr verfügbar';
@@ -346,7 +355,16 @@
                     
                     const minutes = Math.floor(costInSeconds / 60);
                     const seconds = costInSeconds % 60;
-                    const costString = (minutes > 0 ? `${minutes}m ` : '') + (seconds > 0 ? `${seconds}s` : '');
+                    let costString = '';
+                    if (minutes > 0) {
+                        costString += `${minutes}m`;
+                    }
+                    if (seconds > 0) {
+                        if (costString) {
+                            costString += ' ';
+                        }
+                        costString += `${seconds}s`;
+                    }
                     
                     showMessage(`Ein Tipp wurde gewährt! ${costString} wurden zur Zeit hinzugefügt. ${currentTips[tipsGivenForCurrentSolution]}`, 'bg-yellow-600');
                     tipsGivenForCurrentSolution++;
