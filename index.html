@@ -3,329 +3,750 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escape Room: Das Geheimnis des Schlosses</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Escape Room - Mission Control</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
-        body {
-            font-family: 'Inter', sans-serif;
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
         }
-        .game-container {
-            flex: 1;
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
             max-width: 600px;
+            width: 100%;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        h1 {
+            text-align: center;
+            color: #764ba2;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .timer-display {
+            text-align: center;
+            font-size: 3em;
+            font-weight: bold;
+            color: #667eea;
+            margin: 20px 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            font-family: 'Courier New', monospace;
+        }
+
+        .login-section, .game-section {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .input-group {
+            margin-bottom: 20ременд;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 8px;
+            font-size: 16px;
+            transition: all 0.3s;
+        }
+
+        input[type="text"]:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 8px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .mission-info {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+
+        .mission-title {
+            font-size: 1.5em;
+            color: #764ba2;
+            margin-bottom: 10px;
+        }
+
+        .phase-info {
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .hints-section {
+            margin-top: 20px;
+            padding: 15px;
+            background: #fff3cd;
+            border-radius: 10px;
+            border: 2px solid #ffc107;
+        }
+
+        .hints-title {
+            color: #856404;
+            margin-bottom: 15px;
+            font-weight: 600;
+        }
+
+        .hint-buttons {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+        }
+
+        .hint-btn {
+            background: #ffc107;
+            color: #000;
+            padding: 8px;
+            font-size: 14px;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        .hint-btn:hover {
+            background: #ffb300;
+        }
+
+        .hint-btn.used {
+            background: #6c757d;
+            color: white;
+        }
+
+        .time-penalty {
+            font-size: 10px;
+            display: block;
+            margin-top: 2px;
+        }
+
+        .success-message {
+            background: #28a745;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            margin-top: 20px;
+            animation: pulse 0.5s;
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
+        }
+
+        .error-message {
+            background: #dc3545;
+            color: white;
+            padding: 10px;
+            border-radius: 5px;
+            margin-top: 10px;
+            text-align: center;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 30px;
+            background: #e9ecef;
+            border-radius: 15px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            transition: width 0.5s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-weight: 600;
+        }
+
+        .completion-screen {
+            text-align: center;
+            padding: 40px;
+            animation: fadeIn 0.5s;
+        }
+
+        .completion-screen h2 {
+            color: #28a745;
+            font-size: 2.5em;
+            margin-bottom: 20px;
+        }
+
+        .final-time {
+            font-size: 2em;
+            color: #764ba2;
+            margin: 20px 0;
+        }
+
+        .hint-display {
+            background: #e7f5ff;
+            border: 2px solid #339af0;
+            border-radius: 10px;
+            padding: 15px;
+            margin-top: 15px;
+            color: #1864ab;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100 flex items-center justify-center min-h-screen p-4">
-
-    <!-- Hauptspiel-UI -->
-    <div class="bg-gray-800 p-8 md:p-12 rounded-2xl shadow-2xl game-container text-center border-2 border-gray-700">
-        <h1 id="welcome-message" class="text-3xl md:text-4xl font-bold text-teal-400 mb-2">Willkommen beim Escape Room</h1>
-        <p class="text-gray-400 mb-8">Lösen Sie das Rätsel, um die Zeit zu stoppen!</p>
-
-        <!-- Start-Bildschirm -->
-        <div id="start-screen" class="space-y-6">
-            <input type="text" id="playerName" placeholder="Gib deinen Teamnamen ein..."
-                   class="w-full p-3 rounded-lg bg-gray-600 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all duration-300">
-            <button id="startButton"
-                    class="w-full px-6 py-3 bg-green-500 hover:bg-green-600 text-white font-bold rounded-lg shadow-md transition-all duration-300 transform hover:scale-105">
-                Spiel starten
-            </button>
+<body>
+    <div class="container">
+        <h1>🔐 Escape Room</h1>
+        
+        <!-- Login Section -->
+        <div id="loginSection" class="login-section">
+            <div class="input-group">
+                <label for="teamName">Team Name eingeben:</label>
+                <input type="text" id="teamName" placeholder="Euer Teamname...">
+            </div>
+            <button onclick="startGame()">Mission starten</button>
+            <div id="loginError" class="error-message hidden"></div>
         </div>
 
-        <!-- Spiel-UI (versteckt bis Spielstart) -->
-        <div id="game-ui" class="space-y-6 hidden">
-            <!-- Anzeige für Mission und Fortschritt -->
-            <div class="bg-gray-700 p-4 rounded-xl">
-                <h2 class="text-xl md:text-2xl font-semibold text-gray-200 mb-2">Aktuelle Mission: <span id="mission-display">1</span></h2>
-                <div class="text-gray-300">Gelöste Aufgaben: <span id="progress-display">0/3</span></div>
-            </div>
-
-            <div class="bg-gray-700 p-4 rounded-xl">
-                <h2 class="text-xl md:text-2xl font-semibold text-gray-200 mb-2">Verstrichene Zeit:</h2>
-                <div id="timer" class="text-5xl md:text-6xl font-extrabold text-lime-400 tracking-wide transition-colors duration-500">00:00</div>
-            </div>
-
-            <div class="bg-gray-700 p-4 rounded-xl flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
-                <input type="text" id="loesung" placeholder="Geben Sie hier Ihre Lösung ein"
-                       class="flex-grow p-3 rounded-lg bg-gray-600 text-gray-100 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-teal-400 transition-all duration-300">
-                <button id="checkButton"
-                        class="w-full md:w-auto px-6 py-3 bg-teal-500 hover:bg-teal-600 text-white font-bold rounded-lg shadow-md transition-all duration-300 transform hover:scale-105">
-                    Lösung prüfen
-                </button>
-            </div>
+        <!-- Game Section -->
+        <div id="gameSection" class="game-section hidden">
+            <div class="timer-display" id="timer">00:00:00</div>
             
-            <div class="bg-gray-700 p-4 rounded-xl">
-                <button id="tipButton"
-                        class="w-full px-6 py-3 bg-indigo-500 hover:bg-indigo-600 text-white font-bold rounded-lg shadow-md transition-all duration-300 transform hover:scale-105">
-                    Tipp holen (+<span id="tip-cost-display">30s</span>)
-                </button>
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressBar" style="width: 0%">
+                    <span id="progressText">0%</span>
+                </div>
+            </div>
+
+            <div class="mission-info">
+                <div class="mission-title" id="missionTitle">Mission 0</div>
+                <div class="phase-info" id="phaseInfo">Phase 1 von 3</div>
+            </div>
+
+            <div class="input-group">
+                <label for="solutionInput">Lösung eingeben:</label>
+                <input type="text" id="solutionInput" placeholder="Eure Antwort...">
+            </div>
+            <button onclick="checkSolution()">Lösung prüfen</button>
+
+            <div id="feedbackMessage" class="hidden"></div>
+
+            <div class="hints-section">
+                <div class="hints-title">💡 Hinweise (kosten Zeit!)</div>
+                <div class="hint-buttons" id="hintButtons"></div>
+                <div id="currentHint" class="hint-display hidden"></div>
             </div>
         </div>
 
-        <div id="message" class="mt-8 p-4 rounded-lg text-white font-semibold hidden"></div>
+        <!-- Completion Screen -->
+        <div id="completionScreen" class="completion-screen hidden">
+            <h2>🎉 Glückwunsch!</h2>
+            <p>Ihr habt alle Missionen erfolgreich abgeschlossen!</p>
+            <div class="final-time" id="finalTime"></div>
+            <button onclick="location.reload()">Neues Spiel</button>
+        </div>
     </div>
 
+    <!-- Firebase SDKs -->
     <script type="module">
-        // Importiere die benötigten Firebase-Module für die Datenspeicherung
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, serverTimestamp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const welcomeMessageElement = document.getElementById('welcome-message');
-            const playerNameInput = document.getElementById('playerName');
-            const startButton = document.getElementById('startButton');
-            const startScreen = document.getElementById('start-screen');
-            const gameUI = document.getElementById('game-ui');
-            const timerElement = document.getElementById('timer');
-            const loesungInput = document.getElementById('loesung');
-            const checkButton = document.getElementById('checkButton');
-            const tipButton = document.getElementById('tipButton');
-            const messageElement = document.getElementById('message');
-            const missionDisplay = document.getElementById('mission-display');
-            const progressDisplay = document.getElementById('progress-display');
-            const tipCostDisplay = document.getElementById('tip-cost-display');
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC1IonsQ6OTAz41k8V4JtEzgwReU9fPmhk",
+            authDomain: "escape-c96da.firebaseapp.com",
+            projectId: "escape-c96da",
+            storageBucket: "escape-c96da.firebasestorage.app",
+            messagingSenderId: "1011733799997",
+            appId: "1:1011733799997:web:590530a563a1a4fb9c7654"
+        };
 
-            // Spielstatus-Variablen
-            let timeInSeconds = 0; // Timer startet bei 0 und zählt hoch
-            let phaseStartTime = 0; // Startzeit für jede Phase
-            let timerInterval;
-            let currentMission = 1;
-            let solutionsSolved = 0;
-            let tipsGivenForCurrentSolution = 0;
-            const MAX_TIME = 60 * 60; // 60 Minuten in Sekunden
-            let db, auth;
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-            // Definition der Lösungen für jede Mission
-            const missionSolutions = {
-                1: ['21490', '12148', '01912'], // 3 Lösungen für Mission 1
-                2: ['buch', 'spiegel', 'bild', 'uhr', 'diamant'] // 5 Lösungen für Mission 2
-            };
+        // Make functions globally available
+        window.db = db;
+        window.collection = collection;
+        window.addDoc = addDoc;
+        window.serverTimestamp = serverTimestamp;
+    </script>
 
-            // Tipp-Texte für jede Lösung (jeweils bis zu 8 Tipps)
-            const missionTips = {
-                1: [
-                    // Tipps für Lösung 1 (Phase 1: 21490)
-                    ['Tipp 1.1: Es geht um das Morse-Alphabet. Das ausgedruckte Dokument enthält eine Übersetzungstabelle.', 'Tipp 1.2: Verwenden Sie die Morse-Tabelle, um die Zeichen zu übersetzen. Das erste Zeichen ist ein "Z".', 'Tipp 1.3: In jeder Zeile wird eine Zahl buchstabiert. In der ersten Zeile: "ZWEI".', 'Tipp 1.4: Arbeiten Sie sich langsam durch den Morse-Code. Die zweite Reihe bedeutet "EINS".', 'Tipp 1.5: Es gibt nicht viele Zahlen, die mit "V" und "N" anfangen. Die dritte Reihe ist "VIER".', 'Tipp 1.6: Die vierte Reihe ist "NEUN".', 'Tipp 1.7: Sie sollten insgesamt fünf Ziffern decodiert haben.', 'Tipp 1.8: Der Code ist "21490".'],
-                    // Tipps für Lösung 2 (Phase 2: 12148)
-                    ['Tipp 2.1: Der Code ist in dem Puzzle versteckt. Schneiden Sie die Teile aus.', 'Tipp 2.2: Orientieren Sie sich an der dicken, schwarzen Umrandung.', 'Tipp 2.3: Die erste Zeile des Puzzles ergibt "CODE:".', 'Tipp 2.4: Die Zahl unten links ist eine "1".', 'Tipp 2.5: Die einzige Zahl, die neben die "1" passt, ist die "2".', 'Tipp 2.6: Eine weitere "1" folgt der "2".', 'Tipp 2.7: Die vierte Zahl ist eine "4".', 'Tipp 2.8: Die letzte Ziffer ist eine "8". Der vollständige Code lautet "12148".'],
-                    // Tipps für Lösung 3 (Phase 3: 01912)
-                    ['Tipp 3.1: Es scheint kein normales Rätsel zu sein. "21610" ist nicht der gesuchte Code.', 'Tipp 3.2: Beachten Sie die Striche und Punkte oberhalb und unterhalb der Zahl.', 'Tipp 3.3: Die Striche und Punkte sind Morse-Codes. Der obere Code bedeutet "UNTEN".', 'Tipp 3.4: Der untere Morse-Code bedeutet "OBEN".', 'Tipp 3.5: Die Positionen von "OBEN" und "UNTEN" sind vertauscht.', 'Tipp 3.6: Versuchen Sie, das Papier zu drehen und den Code auf dem Kopf stehend zu lesen.', 'Tipp 3.7: Auf dem Kopf stehend gelesen steht dort "01912".', 'Tipp 3.8: Der Code ist "01912".']
-                ],
-                2: [
-                    // Tipps für Mission 2 (5 Lösungen * 8 Tipps)
-                    ['Tipp 1.1', 'Tipp 1.2', 'Tipp 1.3', 'Tipp 1.4', 'Tipp 1.5', 'Tipp 1.6', 'Tipp 1.7', 'Tipp 1.8'],
-                    ['Tipp 2.1', 'Tipp 2.2', 'Tipp 2.3', 'Tipp 2.4', 'Tipp 2.5', 'Tipp 2.6', 'Tipp 2.7', 'Tipp 2.8'],
-                    ['Tipp 3.1', 'Tipp 3.2', 'Tipp 3.3', 'Tipp 3.4', 'Tipp 3.5', 'Tipp 3.6', 'Tipp 3.7', 'Tipp 3.8'],
-                    ['Tipp 4.1', 'Tipp 4.2', 'Tipp 4.3', 'Tipp 4.4', 'Tipp 4.5', 'Tipp 4.6', 'Tipp 4.7', 'Tipp 4.8'],
-                    ['Tipp 5.1', 'Tipp 5.2', 'Tipp 5.3', 'Tipp 5.4', 'Tipp 5.5', 'Tipp 5.6', 'Tipp 5.7', 'Tipp 5.8']
-                ]
-            };
+    <script>
+        // Game state
+        let gameState = {
+            teamName: '',
+            currentMission: 0,
+            currentPhase: 0,
+            startTime: null,
+            totalTime: 0,
+            hintsUsed: [],
+            phaseCompletions: []
+        };
 
-            // Tipp-Kosten: 30s, 1m, 1m 30s, 2m, 3m, 4m, 5m, 6m
-            const tipCosts = [30, 60, 90, 120, 180, 240, 300, 360];
-
-            // Initialisiere Firebase und authentifiziere den Benutzer
-            const firebaseConfig = {
-                apiKey: "AIzaSyC1IonsQ6OTAz41k8V4JtEzgwReU9fPmhk",
-                authDomain: "escape-c96da.firebaseapp.com",
-                projectId: "escape-c96da",
-                storageBucket: "escape-c96da.firebasestorage.app",
-                messagingSenderId: "1011733799997",
-                appId: "1:1011733799997:web:590530a563a1a4fb9c7654"
-            };
-
-            const app = initializeApp(firebaseConfig);
-            db = getFirestore(app);
-            auth = getAuth(app);
-            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-
-            try {
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-            } catch (error) {
-                console.error("Firebase initialization or authentication failed:", error);
-            }
-
-            function startTimer() {
-                timerInterval = setInterval(() => {
-                    timeInSeconds++;
-                    updateTimerDisplay();
-
-                    // Überprüfen, ob die maximale Zeit überschritten wurde
-                    if (timeInSeconds >= MAX_TIME) {
-                        endGame('time_up');
+        // Mission structure
+        const missions = [
+            {
+                name: "Mission 0: Trainingsmission",
+                phases: [
+                    { 
+                        solution: "21490", 
+                        hints: [
+                            "Unsere Experten vor Ort vermuten, dass es hier offenbar um das Morse-Alphabet geht. Im ausgedruckten Dokument befindet sich eine Übersetzungstabelle!",
+                            "Verwenden Sie die Morse-Tabelle, um die Zeichen zu übersetzen. Das erste Zeichen ist offenbar ein 'Z'!",
+                            "In jeder Zeile scheint eine Zahl buchstabiert zu werden. In der ersten Zeile: 'ZWEI'.",
+                            "Arbeiten Sie sich langsam durch den Morse-Code. Schreiben Sie jede Übersetzung über den jeweiligen Code. Die zweite Reihe scheint 'EINS' zu bedeuten.",
+                            "Es gibt nicht viele Zahlen, die mit 'V' und 'N' anfangen - vielleicht lässt sich hier sogar etwas Zeit einsparen?",
+                            "Die dritte Reihe: 'VIER'.",
+                            "Reihe nummer vier: 'NEUN'.",
+                            "Sie sollten insgesamt fünf Ziffern - '21490' decodiert haben. Geben Sie sie hier auf dem Handy ein und drücken Sie OK!"
+                        ] 
+                    },
+                    { 
+                        solution: "12148", 
+                        hints: [
+                            "Unsere Rätsel-Experten vor Ort vermuten, dass der Code für die zweite Phase in diesem Puzzle versteckt ist. Schneiden Sie die einzelnen Teile aus!",
+                            "Unsere Experten weisen darauf hin, dass es hilfreich sein könnte, sich zunächst an der dicken, schwarzen Umrandung zu orientieren.",
+                            "Die erste Zeile des Puzzles scheint 'CODE:' zu ergeben, was unsere Vermutung bestätigt. Wir arbeiten an der zweiten Zeile!",
+                            "Wir haben nun Informationen über den Code an sich. Die Zahl unten links scheint eine '1' zu sein.",
+                            "Es scheint, als wäre die einzige Zahl, die neben die '1' unten links passt, die '2'.",
+                            "Eine weitere '1' scheint der '2' zu folgen.",
+                            "Die vierte Zahl ist eine '4'.",
+                            "Die letzte Ziffer ist eine '8'. Der vollständige Code lautet also: '12148'. Geben Sie ihn hier auf dem Handy ein, und beginnen Sie mit der nächsten Phase!"
+                        ] 
+                    },
+                    { 
+                        solution: "01912", 
+                        hints: [
+                            "Unsere Experten waren sich unsicher, ob es sich hier überhaupt um ein Rätsel handelt, aber '21610' scheint nicht der gesuchte Code zu sein!",
+                            "Uns ist aufgefallen, dass sich oberhalb und unterhalb der '21610' Striche und Punkte befinden.",
+                            "Die Striche und Punkte scheinen Morse-Codes zu sein! Wir arbeiten an der Dechiffrierung!",
+                            "Der obere Morse-Code bedeutet offenbar 'UNTEN'.",
+                            "Der untere Morse-Code scheint 'OBEN' zu bedeuten. Was soll uns das sagen?",
+                            "Uns ist aufgefallen, dass die Positionen von 'OBEN' und 'UNTEN' vertauscht sind.",
+                            "Bitte versuchen Sie, das Papier zu drehen und den Code auf dem Kopf stehend zu lesen.",
+                            "Auf dem Kopf stehend gelesen steht dort '01912'. Das muss der Code für diese Phase sein!"
+                        ] 
                     }
-                }, 1000);
+                ]
+            },
+            {
+                name: "Mission 1: Bahnhof",
+                phases: [
+                    { 
+                        solution: "52347", 
+                        hints: [
+                            "Dieses Rätsel ist seltsam - es scheint keine einzige Zahl zu enthalten! Oder etwa doch?",
+                            "Unsere Rätselexperten vermuten, dass es hier nicht (!) darum geht, etwas zu zählen.",
+                            "Wir haben das Rätsel einem Architekten gezeigt. Ihm fiel auf, dass die meisten Wände des Labyrinths mit den Außenwänden verbunden sind - nur wenige sind freistehend.",
+                            "Möglicherweise hat die Lösung etwas mit der Form der freistehenden Wände zu tun?",
+                            "Wir sind möglicherweise auf dem richtigen Weg - die erste freistehende Wand auf dem Weg zum Ziel hat die Form einer '5'.",
+                            "Auf dem Weg zum Ziel ist die nächste freistehende Wand geformt wie eine '2'.",
+                            "Die dritte Ziffer muss eine '3' sein - das ist die Form der nächsten freistehenden Wand auf dem Weg zum Ziel!",
+                            "Wir haben die Lösung! Vom Eingang zum Ausgang gehend haben die freistehenden Wände in diesem Labyrinth die Formen von '52347' - das muss es sein!"
+                        ] 
+                    },
+                    { 
+                        solution: "23740", 
+                        hints: [
+                            "Dieses Rätsel sieht anders als die anderen aus. Zunächst sollten Sie es ausschneiden.",
+                            "Unsere Experten vermuten, dass dieses Rätsel gefaltet werden muss.",
+                            "Es scheint, als wäre das kleine '+' in der Mitte des Rätsels tatsächlich ein 'zentraler Punkt' der Lösung.",
+                            "Versuchen Sie, die vier Ecken auf das kleine '+' zu falten. Ergibt sich ein Bild?",
+                            "Unsere Experten konnten den ersten Teil des Rätsels lösen. ABCD sind demnach: '2374'. Aber was ist mit E?",
+                            "Es scheint, dass E auf der Rückseite des einmal gefalteten Rätsels zu finden ist. Vielleicht muss es erneut gefaltet werden?",
+                            "Unsere Experten haben die vier Ecken erneut in die Mitte gefaltet: E ist '0'!",
+                            "Die Lösung für diese Phase muss also '23740' sein."
+                        ] 
+                    },
+                    { 
+                        solution: "53480", 
+                        hints: [
+                            "Dieses Rätsel scheint durch reine Logik lösbar zu sein. Unsere Experten empfehlen, Möglichkeiten mit 'bekannten' Positionen aufzuschreiben, wie etwa '0xxx5' und '5xxx0'.",
+                            "Da die '4' rechts von der '5' steht, ist '0xxx5' keine Lösungsmöglichkeit.",
+                            "Die '3' muss zwischen der '4' und der '5' (die, wie wir herausgefunden haben, die erste Ziffer im Code ist) stehen. Das könnte bedeuten, dass der Code mit '534' beginnt.",
+                            "Angenommen, der Code beginnt mit '534' - dann müssen die letzten zwei Ziffern zusammengezählt '8' ergeben.",
+                            "Unsere Arithmetik-Experten sind sich sicher: '8' und '0' ergeben addiert '8'.",
+                            "Da '5' und '0' maximalen Abstand halten müssen, muss die '8' zwischen der '0' und der '4' stehen.",
+                            "Der Lösungscode lautet, so unsere Experten: '53480'.",
+                            "Geben Sie '53480' ein und fahren Sie mit der nächsten Phase fort!"
+                        ] 
+                    },
+                    { 
+                        solution: "13654", 
+                        hints: [
+                            "Dieses Rätsel dreht sich offenbar um Schach. Manchmal hilft es, auf die Bewegungsmuster der einzelnen Figuren zu achten.",
+                            "Denken Sie daran: Türme können sich nur horizontal und vertikal bewegen, Läufer lediglich diagonal. Die Dame kann beides.",
+                            "Unsere Experten empfehlen, dieses Rätsel zu zweit zu lösen: Eine Person liest die Spielzüge vor, eine andere zeichnet Sie auf das Spielbrett.",
+                            "Das Bewegungsmuster des weißen Turms ist eine simple, gerade Linie nach unten. Es könnte also hier eine '1' gemeint sein.",
+                            "Der weiße Läufer scheint, so unsere Experten, mit seinen Bewegungen eine '3' zu beschreiben.",
+                            "Der schwarze Läufer scheint mit seiner Bewegung eine '6' zu zeichnen.",
+                            "Der schwarze Turm scheint, wenn man seine Bewegung nachverfolgt, eine '5' zu beschreiben.",
+                            "Die weiße Dame scheint eine '4' auf das Spielbrett zu zeichnen. Das macht '13654' zur Lösung dieser Phase!"
+                        ] 
+                    },
+                    { 
+                        solution: "32213", 
+                        hints: [
+                            "In diesem Rätsel scheint es um das Falten zu gehen. Allerdings steht dort 'temporär' ... wir testen einige Ansätze!",
+                            "Es ist sehr wichtig, die Paare von Sternen, die im Text benannt sind, präzise aufeinander zu falten.",
+                            "Am vielversprechendsten ist es, zunächst das zuerst benannte Sternenpaar aufeinander zu falten, das Papier wieder zu entfalten und dann fortzufahren.",
+                            "Ein Origami-Spezialist wies uns darauf hin, dass es möglich ist, aus fünf Falzen einen Stern entstehen zu lassen.",
+                            "Vielleicht sollen die fünf Falzungen, von denen im Text die Rede ist, das bewirken? Ist das die 'Supernova'?",
+                            "Wird das Papier so gefaltet, wie es im Text beschrieben ist, ergibt sich aus den Falzlinien das Bild eines Sterns.",
+                            "Der Code hängt mit der Anzahl der Sterne in diesem Bild zusammen.",
+                            "Beginnend im Norden und im Uhrzeigersinn: 3, 2, 2, 1 und 3 Sterne in den 'Armen' des Sterns. Das macht '32213'!"
+                        ] 
+                    }
+                ]
+            }
+        ];
+
+        // Hint time penalties in seconds
+        const hintPenalties = [30, 60, 90, 120, 180, 240, 300, 360];
+
+        let timerInterval;
+
+        function startGame() {
+            const teamName = document.getElementById('teamName').value.trim();
+            if (!teamName) {
+                document.getElementById('loginError').textContent = 'Bitte Teamnamen eingeben!';
+                document.getElementById('loginError').classList.remove('hidden');
+                return;
             }
 
-            function updateTimerDisplay() {
-                const minutes = Math.floor(timeInSeconds / 60);
-                const seconds = timeInSeconds % 60;
-                timerElement.textContent = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-            }
+            gameState.teamName = teamName;
+            gameState.startTime = Date.now();
 
-            function updateProgressDisplay() {
-                progressDisplay.textContent = `${solutionsSolved}/${missionSolutions[currentMission].length}`;
-                updateTipButtonText();
+            // Save start to Firebase
+            saveProgress('game_started');
+
+            document.getElementById('loginSection').classList.add('hidden');
+            document.getElementById('gameSection').classList.remove('hidden');
+
+            updateMissionDisplay();
+            startTimer();
+            generateHintButtons();
+        }
+
+        function startTimer() {
+            timerInterval = setInterval(() => {
+                const elapsed = Math.floor((Date.now() - gameState.startTime) / 1000) + gameState.totalTime;
+                const hours = Math.floor(elapsed / 3600);
+                const minutes = Math.floor((elapsed % 3600) / 60);
+                const seconds = elapsed % 60;
+                
+                document.getElementById('timer').textContent = 
+                    `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+                
+                // Check if time limit exceeded (65 minutes = 3900 seconds)
+                if (elapsed >= 3900) {
+                    gameOver();
+                }
+            }, 100);
+        }
+
+        function updateMissionDisplay() {
+            const mission = missions[gameState.currentMission];
+            document.getElementById('missionTitle').textContent = mission.name;
+            document.getElementById('phaseInfo').textContent = 
+                `Phase ${gameState.currentPhase + 1} von ${mission.phases.length}`;
+            
+            updateProgressBar();
+            document.getElementById('solutionInput').value = '';
+            document.getElementById('feedbackMessage').classList.add('hidden');
+            document.getElementById('currentHint').classList.add('hidden');
+            resetHintButtons();
+        }
+
+        function updateProgressBar() {
+            const totalPhases = missions.reduce((sum, m) => sum + m.phases.length, 0);
+            const completedPhases = gameState.phaseCompletions.length;
+            const progress = (completedPhases / totalPhases) * 100;
+            
+            document.getElementById('progressBar').style.width = `${progress}%`;
+            document.getElementById('progressText').textContent = `${Math.round(progress)}%`;
+        }
+
+        function generateHintButtons() {
+            const container = document.getElementById('hintButtons');
+            container.innerHTML = '';
+            
+            for (let i = 0; i < 8; i++) {
+                const btn = document.createElement('button');
+                btn.className = 'hint-btn';
+                
+                // Only the next hint should be available
+                const isNextHint = i === gameState.hintsUsed.length;
+                const isUsed = i < gameState.hintsUsed.length;
+                
+                if (isUsed) {
+                    btn.classList.add('used');
+                    btn.innerHTML = `
+                        Tipp ${i + 1}
+                        <span class="time-penalty">Verwendet</span>
+                    `;
+                } else if (isNextHint) {
+                    btn.innerHTML = `
+                        Tipp ${i + 1}
+                        <span class="time-penalty">+${formatPenalty(hintPenalties[i])}</span>
+                    `;
+                    btn.onclick = () => useHint(i);
+                } else {
+                    btn.disabled = true;
+                    btn.style.opacity = '0.3';
+                    btn.innerHTML = `
+                        Tipp ${i + 1}
+                        <span class="time-penalty">Gesperrt</span>
+                    `;
+                }
+                
+                container.appendChild(btn);
+            }
+        }
+
+        function formatPenalty(seconds) {
+            if (seconds < 60) return `${seconds}s`;
+            const minutes = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return secs > 0 ? `${minutes}:${secs}` : `${minutes}min`;
+        }
+
+        function resetHintButtons() {
+            gameState.hintsUsed = [];
+            generateHintButtons();
+        }
+
+        function useHint(index) {
+            // Only allow using the next hint in sequence
+            if (index !== gameState.hintsUsed.length) return;
+            if (gameState.hintsUsed.includes(index)) return;
+            
+            // Check current total time
+            const currentTime = Math.floor((Date.now() - gameState.startTime) / 1000) + gameState.totalTime;
+            const timeAfterHint = currentTime + hintPenalties[index];
+            
+            // Check if hint would exceed time limit
+            if (timeAfterHint >= 3900) {
+                alert('❌ Dieser Tipp würde das Zeitlimit von 65 Minuten überschreiten!\nDas Spiel würde sofort beendet werden.\n\nVersucht es ohne diesen Tipp!');
+                return;
             }
             
-            function updateTipButtonText() {
-                const currentTips = missionTips[currentMission][solutionsSolved];
-                const nextTipIndex = tipsGivenForCurrentSolution;
-                if (nextTipIndex < currentTips.length) {
-                    const costInSeconds = tipCosts[nextTipIndex];
-                    const minutes = Math.floor(costInSeconds / 60);
-                    const seconds = costInSeconds % 60;
-                    let costString = '';
-                    if (minutes > 0) {
-                        costString += `${minutes}m`;
-                    }
-                    if (seconds > 0) {
-                        if (costString) {
-                            costString += ' ';
-                        }
-                        costString += `${seconds}s`;
-                    }
-                    tipButton.innerHTML = `Tipp holen (+<span id="tip-cost-display">${costString}</span>)`;
-                } else {
-                    tipButton.textContent = 'Keine Tipps mehr verfügbar';
-                    tipButton.disabled = true;
-                    tipButton.classList.add('opacity-50', 'cursor-not-allowed');
+            // Warning at 50 minutes (3000 seconds)
+            if (currentTime >= 3000) {
+                if (!confirm(`⚠️ WARNUNG: Ihr habt bereits ${Math.floor(currentTime / 60)} Minuten verbraucht!\n\nDieser Tipp kostet ${formatPenalty(hintPenalties[index])} zusätzliche Zeit.\nBei 65 Minuten ist das Spiel automatisch beendet!\n\nTipp wirklich verwenden?`)) {
+                    return;
                 }
             }
+            
+            // Add time penalty
+            gameState.totalTime += hintPenalties[index];
+            gameState.hintsUsed.push(index);
+            
+            // Show hint
+            const mission = missions[gameState.currentMission];
+            const hint = mission.phases[gameState.currentPhase].hints[index];
+            const hintDisplay = document.getElementById('currentHint');
+            hintDisplay.innerHTML = `<strong>Tipp ${index + 1}:</strong> ${hint}`;
+            hintDisplay.classList.remove('hidden');
+            
+            // Regenerate buttons to update their states
+            generateHintButtons();
+        }
 
-            function showMessage(msg, type) {
-                messageElement.textContent = msg;
-                messageElement.className = 'mt-8 p-4 rounded-lg text-white font-semibold';
-                messageElement.classList.add(type);
-                messageElement.classList.remove('hidden');
-            }
-
-            function disableButtons() {
-                checkButton.disabled = true;
-                tipButton.disabled = true;
-                checkButton.classList.add('opacity-50', 'cursor-not-allowed');
-                tipButton.classList.add('opacity-50', 'cursor-not-allowed');
-            }
-
-            function endGame(reason) {
-                clearInterval(timerInterval);
-                disableButtons();
-                if (reason === 'time_up') {
-                    showMessage('Die Zeit ist abgelaufen! Sie haben das Zeitlimit von 60 Minuten überschritten. Spiel vorbei.', 'bg-red-600');
-                } else {
-                    const finalTime = timerElement.textContent;
-                    showMessage(`Herzlichen Glückwunsch! Sie haben den Escape Room in ${finalTime} gelöst!`, 'bg-green-600');
-                }
-            }
-
-            // Lösung prüfen
-            checkButton.addEventListener('click', async () => {
-                const loesung = loesungInput.value.trim().toLowerCase();
-                const expectedSolution = missionSolutions[currentMission][solutionsSolved];
-                const playerName = playerNameInput.value.trim();
-
-                if (loesung === expectedSolution) {
-                    const phaseDuration = timeInSeconds - phaseStartTime;
-                    
-                    const newResult = {
-                        mission: currentMission,
-                        phase: solutionsSolved + 1,
-                        time: phaseDuration,
-                        playerName: playerName || 'Anonym',
-                        timestamp: new Date().toISOString()
-                    };
-
-                    // Speichere das Ergebnis in Firestore
-                    try {
-                        const userId = auth.currentUser ? auth.currentUser.uid : crypto.randomUUID();
-                        const resultsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/results`);
-                        await addDoc(resultsCollectionRef, newResult);
-                        console.log("Ergebnis in Firestore gespeichert.");
-                    } catch (e) {
-                        console.error("Fehler beim Hinzufügen des Dokuments: ", e);
-                        showMessage("Fehler beim Speichern des Ergebnisses.", 'bg-red-600');
-                    }
-                    
-                    phaseStartTime = timeInSeconds; // Setze die Startzeit für die nächste Phase zurück
-
-                    solutionsSolved++;
-                    tipsGivenForCurrentSolution = 0; // Setze Tipps für die nächste Lösung zurück
-                    showMessage(`Richtig! "${loesung}" war die korrekte Lösung.`, 'bg-green-600');
-                    loesungInput.value = '';
-                    updateProgressDisplay();
-                    
-                    if (solutionsSolved === missionSolutions[currentMission].length) {
-                        // Mission abgeschlossen
-                        if (currentMission === 1) {
-                            showMessage('Mission 1 abgeschlossen! Bereit für die nächste Herausforderung.', 'bg-teal-600');
-                            currentMission = 2;
-                            solutionsSolved = 0;
-                            missionDisplay.textContent = currentMission;
-                            setTimeout(updateProgressDisplay, 500); // UI-Update mit leichter Verzögerung
-                        } else if (currentMission === 2) {
-                            // Spielende
-                            endGame('mission_complete');
-                        }
-                    }
-                } else {
-                    showMessage('Falsche Lösung, versuchen Sie es noch einmal.', 'bg-red-600');
-                    loesungInput.value = '';
-                }
-            });
-
-            // Tipp holen
-            tipButton.addEventListener('click', () => {
-                const currentTips = missionTips[currentMission][solutionsSolved];
+        function checkSolution() {
+            const input = document.getElementById('solutionInput').value.trim().toLowerCase();
+            const mission = missions[gameState.currentMission];
+            const correctSolution = mission.phases[gameState.currentPhase].solution;
+            
+            if (input === correctSolution) {
+                // Correct answer
+                showFeedback('Richtig! Weiter zur nächsten Phase...', 'success');
                 
-                if (tipsGivenForCurrentSolution < currentTips.length) {
-                    const costInSeconds = tipCosts[tipsGivenForCurrentSolution];
-                    timeInSeconds += costInSeconds;
+                // Save phase completion
+                const phaseId = `M${gameState.currentMission}_P${gameState.currentPhase}`;
+                gameState.phaseCompletions.push(phaseId);
+                saveProgress(`phase_completed_${phaseId}`);
+                
+                // Move to next phase
+                setTimeout(() => {
+                    gameState.currentPhase++;
                     
-                    const minutes = Math.floor(costInSeconds / 60);
-                    const seconds = costInSeconds % 60;
-                    let costString = '';
-                    if (minutes > 0) {
-                        costString += `${minutes}m`;
-                    }
-                    if (seconds > 0) {
-                        if (costString) {
-                            costString += ' ';
+                    if (gameState.currentPhase >= mission.phases.length) {
+                        // Mission complete, move to next mission
+                        gameState.currentMission++;
+                        gameState.currentPhase = 0;
+                        
+                        if (gameState.currentMission >= missions.length) {
+                            // Game complete!
+                            completeGame();
+                        } else {
+                            updateMissionDisplay();
                         }
-                        costString += `${seconds}s`;
+                    } else {
+                        updateMissionDisplay();
                     }
-                    
-                    showMessage(`Ein Tipp wurde gewährt! ${costString} wurden zur Zeit hinzugefügt. ${currentTips[tipsGivenForCurrentSolution]}`, 'bg-yellow-600');
-                    tipsGivenForCurrentSolution++;
-                    updateTimerDisplay();
-                    updateTipButtonText();
-                } else {
-                    showMessage('Es gibt keine weiteren Tipps für diese Mission.', 'bg-red-600');
+                }, 1500);
+            } else {
+                // Wrong answer - add 30 seconds penalty
+                gameState.totalTime += 30;
+                showFeedback('❌ Falsche Antwort! +30 Sekunden Zeitstrafe. Versucht es nochmal!', 'error');
+                
+                // Check if this pushes over the time limit
+                const currentTime = Math.floor((Date.now() - gameState.startTime) / 1000) + gameState.totalTime;
+                if (currentTime >= 3900) {
+                    setTimeout(() => gameOver(), 100);
+                }
+            }
+        }
+
+        function showFeedback(message, type) {
+            const feedback = document.getElementById('feedbackMessage');
+            feedback.textContent = message;
+            feedback.className = type === 'success' ? 'success-message' : 'error-message';
+            feedback.classList.remove('hidden');
+        }
+
+        function completeGame() {
+            clearInterval(timerInterval);
+            const totalTime = Math.floor((Date.now() - gameState.startTime) / 1000) + gameState.totalTime;
+            
+            // Save completion to Firebase
+            saveProgress('game_completed', totalTime);
+            
+            // Show completion screen
+            document.getElementById('gameSection').classList.add('hidden');
+            document.getElementById('completionScreen').classList.remove('hidden');
+            
+            const hours = Math.floor(totalTime / 3600);
+            const minutes = Math.floor((totalTime % 3600) / 60);
+            const seconds = totalTime % 60;
+            document.getElementById('finalTime').textContent = 
+                `Gesamtzeit: ${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(seconds).padStart(2, '0')}`;
+        }
+        
+        function gameOver() {
+            clearInterval(timerInterval);
+            const totalTime = Math.floor((Date.now() - gameState.startTime) / 1000) + gameState.totalTime;
+            
+            // Save game over to Firebase
+            saveProgress('game_over_time_limit', totalTime);
+            
+            // Show game over screen
+            document.getElementById('gameSection').classList.add('hidden');
+            
+            // Create and show game over message
+            const gameOverHTML = `
+                <div class="completion-screen">
+                    <h2 style="color: #dc3545;">⏱️ Zeit abgelaufen!</h2>
+                    <p style="font-size: 1.2em; margin: 20px 0;">Das Zeitlimit von 65 Minuten wurde überschritten.</p>
+                    <p>Ihr habt ${gameState.phaseCompletions.length} von ${missions.reduce((sum, m) => sum + m.phases.length, 0)} Phasen geschafft.</p>
+                    <div class="final-time">Endzeit: 01:05:00</div>
+                    <button onclick="location.reload()">Neues Spiel starten</button>
+                </div>
+            `;
+            
+            document.getElementById('completionScreen').innerHTML = gameOverHTML;
+            document.getElementById('completionScreen').classList.remove('hidden');
+        }
+
+        async function saveProgress(event, totalTime = null) {
+            if (!window.db) {
+                console.error('Firebase not initialized');
+                return;
+            }
+
+            try {
+                const data = {
+                    teamName: gameState.teamName,
+                    event: event,
+                    timestamp: window.serverTimestamp(),
+                    clientTimestamp: new Date().toISOString()
+                };
+
+                if (totalTime !== null) {
+                    data.totalTime = totalTime;
+                }
+
+                if (event.startsWith('phase_completed_')) {
+                    data.phasesCompleted = gameState.phaseCompletions.length;
+                }
+
+                await window.addDoc(window.collection(window.db, 'escape_room_progress'), data);
+                console.log('Progress saved:', event);
+            } catch (error) {
+                console.error('Error saving progress:', error);
+            }
+        }
+
+        // Allow Enter key to submit solution
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('solutionInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    checkSolution();
                 }
             });
-
-            // Spielstart
-            startButton.addEventListener('click', () => {
-                const playerName = playerNameInput.value.trim();
-                if (playerName) {
-                    welcomeMessageElement.textContent = `Willkommen, ${playerName}!`;
-                    startScreen.classList.add('hidden');
-                    gameUI.classList.remove('hidden');
-                    startTimer();
-                    phaseStartTime = timeInSeconds;
-                } else {
-                    showMessage('Bitte geben Sie einen Namen ein, um das Spiel zu starten.', 'bg-red-600');
+            
+            document.getElementById('teamName').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    startGame();
                 }
             });
-
-            // Initialisierung bei Laden der Seite
-            updateProgressDisplay();
         });
     </script>
 </body>
