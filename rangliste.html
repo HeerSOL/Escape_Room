@@ -3,139 +3,614 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Escape Room Bestenliste</title>
-    <script src="https://cdn.tailwindcss.com"></script>
+    <title>Escape Room - Live Rangliste</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap');
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
         body {
-            font-family: 'Inter', sans-serif;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            text-align: center;
+            color: white;
+            font-size: 3em;
+            margin-bottom: 30px;
+            text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+            animation: glow 2s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), 0 0 20px rgba(255, 255, 255, 0.2); }
+            to { text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3), 0 0 30px rgba(255, 255, 255, 0.4); }
+        }
+
+        .stats-bar {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 30px;
+            display: flex;
+            justify-content: space-around;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .stat-item {
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            color: #764ba2;
+        }
+
+        .stat-label {
+            color: #666;
+            font-size: 0.9em;
+            margin-top: 5px;
+        }
+
+        .leaderboard {
+            background: rgba(255, 255, 255, 0.98);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        .team-card {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            animation: slideIn 0.5s ease-out;
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .team-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .team-card.completed {
+            background: linear-gradient(135deg, #84fab0 0%, #8fd3f4 100%);
+        }
+
+        .team-card.time-over {
+            background: linear-gradient(135deg, #ffa0a0 0%, #ffcccc 100%);
+        }
+
+        @keyframes slideIn {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        .rank-badge {
+            position: absolute;
+            top: 50%;
+            left: 20px;
+            transform: translateY(-50%);
+            width: 60px;
+            height: 60px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 1.8em;
+            font-weight: bold;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .rank-badge.gold {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+        }
+
+        .rank-badge.silver {
+            background: linear-gradient(135deg, #C0C0C0 0%, #808080 100%);
+        }
+
+        .rank-badge.bronze {
+            background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%);
+        }
+
+        .team-info {
+            margin-left: 90px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .team-name {
+            font-size: 1.5em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+
+        .team-status {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .timer {
+            font-family: 'Courier New', monospace;
+            font-size: 1.3em;
+            color: #667eea;
+            font-weight: bold;
+        }
+
+        .timer.warning {
+            color: #ff9800;
+            animation: pulse 1s infinite;
+        }
+
+        .timer.danger {
+            color: #f44336;
+            animation: pulse 0.5s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .progress-container {
+            flex: 1;
+            margin: 0 30px;
+        }
+
+        .progress-bars {
+            display: flex;
+            gap: 4px;
+            margin-top: 10px;
+        }
+
+        .phase-block {
+            flex: 1;
+            height: 40px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+
+        .phase-block.completed {
+            background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);
+            animation: complete 0.5s ease;
+        }
+
+        .phase-block.current {
+            background: linear-gradient(135deg, #FFC107 0%, #FF9800 100%);
+            animation: blink 1.5s infinite;
+        }
+
+        @keyframes complete {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .phase-label {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-weight: bold;
+            font-size: 0.9em;
+            text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.3);
+        }
+
+        .mission-separator {
+            width: 3px;
+            background: #764ba2;
+            margin: 0 2px;
+        }
+
+        .timestamp {
+            font-size: 0.85em;
+            color: #666;
+            margin-top: 5px;
+            font-style: italic;
+        }
+
+        .live-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            background: #4CAF50;
+            border-radius: 50%;
+            margin-left: 10px;
+            animation: livePulse 2s infinite;
+        }
+
+        @keyframes livePulse {
+            0%, 100% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.2); opacity: 0.7; }
+        }
+
+        .legend {
+            margin-top: 30px;
+            padding: 20px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            gap: 30px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .legend-box {
+            width: 30px;
+            height: 30px;
+            border-radius: 5px;
+        }
+
+        .no-teams {
+            text-align: center;
+            padding: 60px;
+            color: #666;
+            font-size: 1.2em;
+        }
+
+        .last-update {
+            text-align: center;
+            color: rgba(255, 255, 255, 0.8);
+            margin-top: 20px;
+            font-size: 0.9em;
+        }
+
+        .completion-badge {
+            background: #4CAF50;
+            color: white;
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 0.9em;
+            font-weight: bold;
+            animation: bounce 0.5s ease;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-5px); }
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100 flex items-center justify-center min-h-screen p-4">
-
-    <div class="bg-gray-800 p-8 md:p-12 rounded-2xl shadow-2xl w-full max-w-4xl text-center border-2 border-gray-700">
-        <h1 class="text-4xl md:text-5xl font-bold text-lime-400 mb-2">Bestenliste</h1>
-        <p class="text-gray-400 mb-8">Live-Ranking nach Phasen</p>
-
-        <div id="loading" class="text-xl text-gray-400">Lade Bestenliste...</div>
-
-        <div id="scoreboard-container" class="space-y-8 hidden">
-            <!-- Mission 1 Sektion -->
-            <div>
-                <h2 class="text-3xl font-semibold text-teal-400 mb-4">Mission 1</h2>
-                <div id="mission1-phases" class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <!-- Phasen werden hier dynamisch eingefügt -->
-                </div>
+<body>
+    <div class="container">
+        <h1>🏆 Escape Room Live Rangliste <span class="live-indicator"></span></h1>
+        
+        <div class="stats-bar">
+            <div class="stat-item">
+                <div class="stat-value" id="totalTeams">0</div>
+                <div class="stat-label">Teams aktiv</div>
             </div>
-
-            <!-- Mission 2 Sektion -->
-            <div>
-                <h2 class="text-3xl font-semibold text-teal-400 mb-4">Mission 2</h2>
-                <div id="mission2-phases" class="grid grid-cols-1 md:grid-cols-5 gap-4">
-                    <!-- Phasen werden hier dynamisch eingefügt -->
-                </div>
+            <div class="stat-item">
+                <div class="stat-value" id="completedTeams">0</div>
+                <div class="stat-label">Abgeschlossen</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="avgProgress">0%</div>
+                <div class="stat-label">Ø Fortschritt</div>
+            </div>
+            <div class="stat-item">
+                <div class="stat-value" id="bestTime">--:--:--</div>
+                <div class="stat-label">Beste Zeit</div>
             </div>
         </div>
 
+        <div class="leaderboard" id="leaderboard">
+            <div class="no-teams">Warte auf Teams...</div>
+        </div>
+
+        <div class="legend">
+            <div class="legend-item">
+                <div class="legend-box" style="background: linear-gradient(135deg, #4CAF50 0%, #45a049 100%);"></div>
+                <span>Abgeschlossen</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: linear-gradient(135deg, #FFC107 0%, #FF9800 100%);"></div>
+                <span>Aktuelle Phase</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box" style="background: #e0e0e0;"></div>
+                <span>Nicht erreicht</span>
+            </div>
+            <div class="legend-item">
+                <div class="legend-box mission-separator" style="width: 30px; height: 30px;"></div>
+                <span>Missionstrenner</span>
+            </div>
+        </div>
+
+        <div class="last-update">Letzte Aktualisierung: <span id="lastUpdate">--</span></div>
     </div>
 
+    <!-- Firebase SDKs -->
     <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, query, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-        import { getAuth, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, query, orderBy, onSnapshot } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
 
-        document.addEventListener('DOMContentLoaded', async () => {
-            const loadingElement = document.getElementById('loading');
-            const scoreboardContainer = document.getElementById('scoreboard-container');
-            const mission1Container = document.getElementById('mission1-phases');
-            const mission2Container = document.getElementById('mission2-phases');
+        // Firebase configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyC1IonsQ6OTAz41k8V4JtEzgwReU9fPmhk",
+            authDomain: "escape-c96da.firebaseapp.com",
+            projectId: "escape-c96da",
+            storageBucket: "escape-c96da.firebasestorage.app",
+            messagingSenderId: "1011733799997",
+            appId: "1:1011733799997:web:590530a563a1a4fb9c7654"
+        };
 
-            // Firebase Initialisierung
-            const firebaseConfig = {
-                apiKey: "AIzaSyC1IonsQ6OTAz41k8V4JtEzgwReU9fPmhk",
-                authDomain: "escape-c96da.firebaseapp.com",
-                projectId: "escape-c96da",
-                storageBucket: "escape-c96da.firebasestorage.app",
-                messagingSenderId: "1011733799997",
-                appId: "1:1011733799997:web:590530a563a1a4fb9c7654"
-            };
+        // Initialize Firebase
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
-            const app = initializeApp(firebaseConfig);
-            const db = getFirestore(app);
-            const auth = getAuth(app);
-            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+        // Teams data structure
+        let teamsData = {};
+        
+        // Mission structure (must match main game)
+        const missionStructure = [
+            { name: "Mission 0", phases: 3 },
+            { name: "Mission 1", phases: 5 }
+        ];
+        const totalPhases = 8;
 
-            try {
-                // Anonyme Anmeldung ist ausreichend, da nur Leserechte benötigt werden
-                await signInAnonymously(auth);
-            } catch (error) {
-                console.error("Firebase authentication failed:", error);
-                loadingElement.textContent = "Fehler beim Laden der Bestenliste.";
+        // Listen to Firebase changes
+        const q = query(collection(db, 'escape_room_progress'), orderBy('timestamp', 'asc'));
+        
+        onSnapshot(q, (snapshot) => {
+            snapshot.docChanges().forEach((change) => {
+                if (change.type === "added") {
+                    const data = change.doc.data();
+                    processUpdate(data);
+                }
+            });
+            updateLeaderboard();
+        });
+
+        function processUpdate(data) {
+            const teamName = data.teamName;
+            
+            if (!teamsData[teamName]) {
+                teamsData[teamName] = {
+                    name: teamName,
+                    startTime: null,
+                    phases: [],
+                    totalTime: 0,
+                    status: 'active',
+                    lastUpdate: null
+                };
+            }
+
+            const team = teamsData[teamName];
+
+            if (data.event === 'game_started') {
+                team.startTime = data.timestamp?.toDate() || new Date(data.clientTimestamp);
+                team.status = 'active';
+            } else if (data.event.startsWith('phase_completed_')) {
+                const phaseId = data.event.replace('phase_completed_', '');
+                if (!team.phases.includes(phaseId)) {
+                    team.phases.push(phaseId);
+                    team.lastUpdate = data.timestamp?.toDate() || new Date(data.clientTimestamp);
+                }
+            } else if (data.event === 'game_completed') {
+                team.status = 'completed';
+                team.totalTime = data.totalTime || 0;
+                team.lastUpdate = data.timestamp?.toDate() || new Date(data.clientTimestamp);
+            } else if (data.event === 'game_over_time_limit') {
+                team.status = 'time_over';
+                team.totalTime = 3900; // 65 minutes
+                team.lastUpdate = data.timestamp?.toDate() || new Date(data.clientTimestamp);
+            }
+        }
+
+        function updateLeaderboard() {
+            const leaderboardDiv = document.getElementById('leaderboard');
+            
+            // Sort teams
+            const sortedTeams = Object.values(teamsData).sort((a, b) => {
+                // Completed teams first
+                if (a.status === 'completed' && b.status !== 'completed') return -1;
+                if (b.status === 'completed' && a.status !== 'completed') return 1;
+                
+                // Among completed, sort by time
+                if (a.status === 'completed' && b.status === 'completed') {
+                    return a.totalTime - b.totalTime;
+                }
+                
+                // Then by number of phases completed
+                if (a.phases.length !== b.phases.length) {
+                    return b.phases.length - a.phases.length;
+                }
+                
+                // Then by last update time (earlier is better)
+                if (a.lastUpdate && b.lastUpdate) {
+                    return a.lastUpdate - b.lastUpdate;
+                }
+                
+                return 0;
+            });
+
+            if (sortedTeams.length === 0) {
+                leaderboardDiv.innerHTML = '<div class="no-teams">Warte auf Teams...</div>';
                 return;
             }
 
-            // Reference zur öffentlichen Game-Results-Sammlung
-            const resultsCollectionRef = collection(db, `artifacts/${appId}/public/data/game-results`);
+            // Update stats
+            updateStats(sortedTeams);
 
-            // Live-Update der Bestenliste
-            onSnapshot(resultsCollectionRef, (snapshot) => {
-                loadingElement.classList.add('hidden');
-                scoreboardContainer.classList.remove('hidden');
-                
-                // Ergebnisse für jede Phase und Mission verfolgen
-                const rankings = {};
-
-                snapshot.docs.forEach(doc => {
-                    const result = doc.data();
-                    const { mission, phase, time, playerName } = result;
-
-                    if (!rankings[mission]) {
-                        rankings[mission] = {};
-                    }
-                    if (!rankings[mission][phase] || time < rankings[mission][phase].time) {
-                        rankings[mission][phase] = { time, playerName };
-                    }
-                });
-
-                // Mission 1 Rendering
-                mission1Container.innerHTML = '';
-                for (let i = 1; i <= 3; i++) {
-                    const phaseData = rankings['1']?.[i];
-                    const bestTimeText = phaseData ? `${Math.floor(phaseData.time / 60)}m ${phaseData.time % 60}s` : '—';
-                    const bestPlayerText = phaseData ? phaseData.playerName : 'Noch kein Team';
-                    
-                    const phaseDiv = document.createElement('div');
-                    phaseDiv.className = 'bg-gray-700 p-6 rounded-xl shadow-md transition-all duration-300 transform hover:scale-105';
-                    phaseDiv.innerHTML = `
-                        <h3 class="text-xl font-semibold mb-2">Phase ${i}</h3>
-                        <div class="text-lime-400 font-extrabold text-3xl md:text-4xl">${bestTimeText}</div>
-                        <div class="text-gray-300 mt-2">Team: ${bestPlayerText}</div>
-                    `;
-                    mission1Container.appendChild(phaseDiv);
-                }
-
-                // Mission 2 Rendering
-                mission2Container.innerHTML = '';
-                for (let i = 1; i <= 5; i++) {
-                    const phaseData = rankings['2']?.[i];
-                    const bestTimeText = phaseData ? `${Math.floor(phaseData.time / 60)}m ${phaseData.time % 60}s` : '—';
-                    const bestPlayerText = phaseData ? phaseData.playerName : 'Noch kein Team';
-                    
-                    const phaseDiv = document.createElement('div');
-                    phaseDiv.className = 'bg-gray-700 p-6 rounded-xl shadow-md transition-all duration-300 transform hover:scale-105';
-                    phaseDiv.innerHTML = `
-                        <h3 class="text-xl font-semibold mb-2">Phase ${i}</h3>
-                        <div class="text-lime-400 font-extrabold text-3xl md:text-4xl">${bestTimeText}</div>
-                        <div class="text-gray-300 mt-2">Team: ${bestPlayerText}</div>
-                    `;
-                    mission2Container.appendChild(phaseDiv);
-                }
-            }, (error) => {
-                console.error("Failed to fetch scoreboard data:", error);
-                loadingElement.textContent = "Fehler beim Laden der Bestenliste. Bitte die Konsole überprüfen.";
+            // Generate HTML
+            let html = '';
+            sortedTeams.forEach((team, index) => {
+                html += createTeamCard(team, index + 1);
             });
-        });
+
+            leaderboardDiv.innerHTML = html;
+
+            // Update last update time
+            document.getElementById('lastUpdate').textContent = new Date().toLocaleTimeString('de-DE');
+        }
+
+        function createTeamCard(team, rank) {
+            const isCompleted = team.status === 'completed';
+            const isTimeOver = team.status === 'time_over';
+            const cardClass = isCompleted ? 'completed' : isTimeOver ? 'time-over' : '';
+            
+            // Calculate current time
+            let currentTime = 0;
+            if (team.startTime) {
+                if (isCompleted || isTimeOver) {
+                    currentTime = team.totalTime;
+                } else {
+                    currentTime = Math.floor((Date.now() - team.startTime.getTime()) / 1000);
+                }
+            }
+            
+            const timeString = formatTime(currentTime);
+            const timerClass = currentTime >= 3600 ? 'danger' : currentTime >= 3000 ? 'warning' : '';
+            
+            // Determine rank badge class
+            let rankBadgeClass = '';
+            if (rank === 1) rankBadgeClass = 'gold';
+            else if (rank === 2) rankBadgeClass = 'silver';
+            else if (rank === 3) rankBadgeClass = 'bronze';
+
+            // Create progress bars
+            const progressBars = createProgressBars(team);
+            
+            // Get timestamp of last completed phase
+            const lastTimestamp = team.lastUpdate ? formatTimestamp(team.lastUpdate) : '';
+
+            let statusBadge = '';
+            if (isCompleted) {
+                statusBadge = '<span class="completion-badge">✅ GESCHAFFT!</span>';
+            } else if (isTimeOver) {
+                statusBadge = '<span class="completion-badge" style="background: #f44336;">⏱️ ZEIT ABGELAUFEN</span>';
+            }
+
+            return `
+                <div class="team-card ${cardClass}">
+                    <div class="rank-badge ${rankBadgeClass}">${rank}</div>
+                    <div class="team-info">
+                        <div>
+                            <div class="team-name">${team.name}</div>
+                            ${lastTimestamp ? `<div class="timestamp">Letzte Phase: ${lastTimestamp}</div>` : ''}
+                        </div>
+                        <div class="progress-container">
+                            <div class="progress-bars">
+                                ${progressBars}
+                            </div>
+                        </div>
+                        <div class="team-status">
+                            <div class="timer ${timerClass}">${timeString}</div>
+                            ${statusBadge}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createProgressBars(team) {
+            let html = '';
+            let phaseIndex = 0;
+            
+            for (let m = 0; m < missionStructure.length; m++) {
+                if (m > 0) {
+                    html += '<div class="mission-separator"></div>';
+                }
+                
+                for (let p = 0; p < missionStructure[m].phases; p++) {
+                    const phaseId = `M${m}_P${p}`;
+                    const isCompleted = team.phases.includes(phaseId);
+                    const isCurrent = !isCompleted && team.phases.length === phaseIndex && team.status === 'active';
+                    
+                    const className = isCompleted ? 'completed' : isCurrent ? 'current' : '';
+                    const label = isCompleted ? '✓' : isCurrent ? '▶' : `${phaseIndex + 1}`;
+                    
+                    html += `<div class="phase-block ${className}">
+                        <span class="phase-label">${label}</span>
+                    </div>`;
+                    
+                    phaseIndex++;
+                }
+            }
+            
+            return html;
+        }
+
+        function updateStats(teams) {
+            // Total teams
+            document.getElementById('totalTeams').textContent = teams.length;
+            
+            // Completed teams
+            const completed = teams.filter(t => t.status === 'completed').length;
+            document.getElementById('completedTeams').textContent = completed;
+            
+            // Average progress
+            const totalProgress = teams.reduce((sum, t) => sum + (t.phases.length / totalPhases), 0);
+            const avgProgress = teams.length > 0 ? Math.round((totalProgress / teams.length) * 100) : 0;
+            document.getElementById('avgProgress').textContent = `${avgProgress}%`;
+            
+            // Best time
+            const completedTeams = teams.filter(t => t.status === 'completed');
+            if (completedTeams.length > 0) {
+                const bestTime = Math.min(...completedTeams.map(t => t.totalTime));
+                document.getElementById('bestTime').textContent = formatTime(bestTime);
+            } else {
+                document.getElementById('bestTime').textContent = '--:--:--';
+            }
+        }
+
+        function formatTime(seconds) {
+            const hours = Math.floor(seconds / 3600);
+            const minutes = Math.floor((seconds % 3600) / 60);
+            const secs = seconds % 60;
+            return `${String(hours).padStart(2, '0')}:${String(minutes).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
+        }
+
+        function formatTimestamp(date) {
+            return date.toLocaleTimeString('de-DE', { 
+                hour: '2-digit', 
+                minute: '2-digit',
+                second: '2-digit'
+            });
+        }
+
+        // Auto-refresh timer displays
+        setInterval(() => {
+            const activeTeams = Object.values(teamsData).filter(t => t.status === 'active');
+            if (activeTeams.length > 0) {
+                updateLeaderboard();
+            }
+        }, 1000);
     </script>
 </body>
 </html>
