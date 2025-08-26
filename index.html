@@ -10,26 +10,13 @@
         body {
             font-family: 'Inter', sans-serif;
         }
-        .leaderboard-container {
-            flex: 1;
-            min-width: 250px;
-            max-width: 350px;
-        }
         .game-container {
-            flex: 2;
-            min-width: 350px;
+            flex: 1;
+            max-width: 600px;
         }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100 flex items-center justify-center min-h-screen p-4 space-x-8">
-
-    <!-- Bestenliste -->
-    <div id="leaderboard" class="bg-gray-800 p-8 md:p-12 rounded-2xl shadow-2xl leaderboard-container">
-        <h2 id="leaderboard-title" class="text-2xl md:text-3xl font-bold text-teal-400 mb-4 text-center">Bestenliste</h2>
-        <div id="leaderboard-results" class="space-y-4">
-            <p class="text-gray-400 text-center">Bestenliste wird geladen...</p>
-        </div>
-    </div>
+<body class="bg-gray-900 text-gray-100 flex items-center justify-center min-h-screen p-4">
 
     <!-- Hauptspiel-UI -->
     <div class="bg-gray-800 p-8 md:p-12 rounded-2xl shadow-2xl game-container text-center border-2 border-gray-700">
@@ -80,24 +67,10 @@
     </div>
 
     <script type="module">
+        // Importiere die benötigten Firebase-Module für die Datenspeicherung
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-
-        // Your web app's Firebase configuration
-        const firebaseConfig = {
-            apiKey: "AIzaSyC1IonsQ6OTAz41k8V4JtEzgwReU9fPmhk",
-            authDomain: "escape-c96da.firebaseapp.com",
-            projectId: "escape-c96da",
-            storageBucket: "escape-c96da.firebasestorage.app",
-            messagingSenderId: "1011733799997",
-            appId: "1:1011733799997:web:590530a563a1a4fb9c7654"
-        };
-        
-        // Initialize Firebase
-        let app, db, auth;
-        const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
-        const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
 
         document.addEventListener('DOMContentLoaded', async () => {
             const welcomeMessageElement = document.getElementById('welcome-message');
@@ -105,8 +78,6 @@
             const startButton = document.getElementById('startButton');
             const startScreen = document.getElementById('start-screen');
             const gameUI = document.getElementById('game-ui');
-            const leaderboardElement = document.getElementById('leaderboard');
-            const leaderboardResultsElement = document.getElementById('leaderboard-results');
             const timerElement = document.getElementById('timer');
             const loesungInput = document.getElementById('loesung');
             const checkButton = document.getElementById('checkButton');
@@ -115,26 +86,6 @@
             const missionDisplay = document.getElementById('mission-display');
             const progressDisplay = document.getElementById('progress-display');
             const tipCostDisplay = document.getElementById('tip-cost-display');
-            const leaderboardTitle = document.getElementById('leaderboard-title');
-
-            // Initialize Firebase services
-            try {
-                app = initializeApp(firebaseConfig);
-                db = getFirestore(app);
-                auth = getAuth(app);
-                if (initialAuthToken) {
-                    await signInWithCustomToken(auth, initialAuthToken);
-                } else {
-                    await signInAnonymously(auth);
-                }
-                
-                // Wir starten den Listener für die Bestenliste direkt nach der Initialisierung
-                setupLeaderboardListener();
-
-            } catch (error) {
-                console.error("Firebase initialization failed:", error);
-                showMessage("Fehler beim Laden des Spiels. Bitte versuchen Sie es erneut.", 'bg-red-600');
-            }
 
             // Spielstatus-Variablen
             let timeInSeconds = 0; // Timer startet bei 0 und zählt hoch
@@ -143,8 +94,8 @@
             let currentMission = 1;
             let solutionsSolved = 0;
             let tipsGivenForCurrentSolution = 0;
-            const leaderboardResults = [];
             const MAX_TIME = 60 * 60; // 60 Minuten in Sekunden
+            let db, auth;
 
             // Definition der Lösungen für jede Mission
             const missionSolutions = {
@@ -175,6 +126,32 @@
             // Tipp-Kosten: 30s, 1m, 1m 30s, 2m, 3m, 4m, 5m, 6m
             const tipCosts = [30, 60, 90, 120, 180, 240, 300, 360];
 
+            // Initialisiere Firebase und authentifiziere den Benutzer
+            const firebaseConfig = {
+                apiKey: "AIzaSyC1IonsQ6OTAz41k8V4JtEzgwReU9fPmhk",
+                authDomain: "escape-c96da.firebaseapp.com",
+                projectId: "escape-c96da",
+                storageBucket: "escape-c96da.firebasestorage.app",
+                messagingSenderId: "1011733799997",
+                appId: "1:1011733799997:web:590530a563a1a4fb9c7654"
+            };
+
+            const app = initializeApp(firebaseConfig);
+            db = getFirestore(app);
+            auth = getAuth(app);
+            const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+            const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+            try {
+                if (initialAuthToken) {
+                    await signInWithCustomToken(auth, initialAuthToken);
+                } else {
+                    await signInAnonymously(auth);
+                }
+            } catch (error) {
+                console.error("Firebase initialization or authentication failed:", error);
+            }
+
             function startTimer() {
                 timerInterval = setInterval(() => {
                     timeInSeconds++;
@@ -198,53 +175,6 @@
                 updateTipButtonText();
             }
             
-            // Funktion zum Einrichten des Live-Listeners für die Bestenliste
-            async function setupLeaderboardListener() {
-                leaderboardResultsElement.innerHTML = '<p class="text-gray-400 text-center">Bestenliste wird geladen...</p>'; // Ladeanzeige
-
-                const userId = auth.currentUser ? auth.currentUser.uid : 'anonymous';
-                const leaderboardRef = collection(db, `artifacts/${appId}/users/${userId}/leaderboard`);
-
-                // Wir verwenden onSnapshot() anstelle von getDocs()
-                // Dies wird jedes Mal ausgelöst, wenn sich die Daten ändern
-                onSnapshot(leaderboardRef, (querySnapshot) => {
-                    const results = [];
-                    querySnapshot.forEach((doc) => {
-                        results.push(doc.data());
-                    });
-
-                    // Sortiere die Ergebnisse in aufsteigender Reihenfolge nach Zeit
-                    results.sort((a, b) => a.time - b.time);
-
-                    if (results.length === 0) {
-                         leaderboardResultsElement.innerHTML = '<p class="text-gray-400 text-center">Noch keine Ergebnisse für diese Mission.</p>';
-                    } else {
-                        leaderboardResultsElement.innerHTML = '';
-                        results.forEach((result, index) => {
-                            const minutes = Math.floor(result.time / 60);
-                            const seconds = result.time % 60;
-                            const displayTime = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-                            
-                            const resultHtml = `
-                                <div class="bg-gray-700 p-4 rounded-xl text-left flex justify-between items-center">
-                                    <div>
-                                        <p class="text-gray-300 font-semibold">${index + 1}. Platz: ${result.playerName}</p>
-                                        <p class="text-gray-500 text-sm">Mission ${result.mission}, Phase ${result.phase}</p>
-                                    </div>
-                                    <div>
-                                        <p class="text-lime-400 text-xl font-bold">${displayTime}</p>
-                                    </div>
-                                </div>
-                            `;
-                            leaderboardResultsElement.innerHTML += resultHtml;
-                        });
-                    }
-                }, (error) => {
-                    console.error("Fehler beim Abrufen der Rangliste: ", error);
-                    showMessage("Fehler beim Laden der Bestenliste.", 'bg-red-600');
-                });
-            }
-
             function updateTipButtonText() {
                 const currentTips = missionTips[currentMission][solutionsSolved];
                 const nextTipIndex = tipsGivenForCurrentSolution;
@@ -299,6 +229,7 @@
             checkButton.addEventListener('click', async () => {
                 const loesung = loesungInput.value.trim().toLowerCase();
                 const expectedSolution = missionSolutions[currentMission][solutionsSolved];
+                const playerName = playerNameInput.value.trim();
 
                 if (loesung === expectedSolution) {
                     const phaseDuration = timeInSeconds - phaseStartTime;
@@ -307,26 +238,25 @@
                         mission: currentMission,
                         phase: solutionsSolved + 1,
                         time: phaseDuration,
-                        playerName: playerNameInput.value || 'Anonym'
+                        playerName: playerName || 'Anonym',
+                        timestamp: new Date().toISOString()
                     };
-                    
-                    // Daten in Firestore speichern
+
+                    // Speichere das Ergebnis in Firestore
                     try {
-                        const userId = auth.currentUser ? auth.currentUser.uid : 'anonymous';
-                        const leaderboardRef = collection(db, `artifacts/${appId}/users/${userId}/leaderboard`);
-                        await addDoc(leaderboardRef, newResult);
+                        const userId = auth.currentUser ? auth.currentUser.uid : crypto.randomUUID();
+                        const resultsCollectionRef = collection(db, `artifacts/${appId}/users/${userId}/results`);
+                        await addDoc(resultsCollectionRef, newResult);
                         console.log("Ergebnis in Firestore gespeichert.");
                     } catch (e) {
                         console.error("Fehler beim Hinzufügen des Dokuments: ", e);
                         showMessage("Fehler beim Speichern des Ergebnisses.", 'bg-red-600');
                     }
                     
-                    // Der Bestenlisten-Listener kümmert sich um das UI-Update
-                    
-                    phaseStartTime = timeInSeconds; // Startzeit für die nächste Phase zurücksetzen
+                    phaseStartTime = timeInSeconds; // Setze die Startzeit für die nächste Phase zurück
 
                     solutionsSolved++;
-                    tipsGivenForCurrentSolution = 0; // Tipps für die nächste Lösung zurücksetzen
+                    tipsGivenForCurrentSolution = 0; // Setze Tipps für die nächste Lösung zurück
                     showMessage(`Richtig! "${loesung}" war die korrekte Lösung.`, 'bg-green-600');
                     loesungInput.value = '';
                     updateProgressDisplay();
@@ -387,7 +317,6 @@
                     welcomeMessageElement.textContent = `Willkommen, ${playerName}!`;
                     startScreen.classList.add('hidden');
                     gameUI.classList.remove('hidden');
-                    leaderboardElement.classList.remove('hidden');
                     startTimer();
                     phaseStartTime = timeInSeconds;
                 } else {
