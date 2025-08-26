@@ -81,7 +81,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, onSnapshot, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // Your web app's Firebase configuration
@@ -128,8 +128,8 @@
                     await signInAnonymously(auth);
                 }
                 
-                // Lade die Bestenliste direkt nach der Firebase-Initialisierung
-                await updateLeaderboardDisplay(1, 1);
+                // Wir starten den Listener für die Bestenliste direkt nach der Initialisierung
+                setupLeaderboardListener();
 
             } catch (error) {
                 console.error("Firebase initialization failed:", error);
@@ -198,20 +198,16 @@
                 updateTipButtonText();
             }
             
-            async function updateLeaderboardDisplay(mission, phase) {
-                leaderboardTitle.textContent = `Bestenliste für Mission ${mission}, Phase ${phase}`;
+            // Funktion zum Einrichten des Live-Listeners für die Bestenliste
+            async function setupLeaderboardListener() {
                 leaderboardResultsElement.innerHTML = '<p class="text-gray-400 text-center">Bestenliste wird geladen...</p>'; // Ladeanzeige
 
                 const userId = auth.currentUser ? auth.currentUser.uid : 'anonymous';
                 const leaderboardRef = collection(db, `artifacts/${appId}/users/${userId}/leaderboard`);
 
-                const q = query(leaderboardRef, 
-                    where("mission", "==", mission),
-                    where("phase", "==", phase)
-                );
-                
-                try {
-                    const querySnapshot = await getDocs(q);
+                // Wir verwenden onSnapshot() anstelle von getDocs()
+                // Dies wird jedes Mal ausgelöst, wenn sich die Daten ändern
+                onSnapshot(leaderboardRef, (querySnapshot) => {
                     const results = [];
                     querySnapshot.forEach((doc) => {
                         results.push(doc.data());
@@ -221,7 +217,7 @@
                     results.sort((a, b) => a.time - b.time);
 
                     if (results.length === 0) {
-                         leaderboardResultsElement.innerHTML = '<p class="text-gray-400 text-center">Noch keine Ergebnisse für diese Phase.</p>';
+                         leaderboardResultsElement.innerHTML = '<p class="text-gray-400 text-center">Noch keine Ergebnisse für diese Mission.</p>';
                     } else {
                         leaderboardResultsElement.innerHTML = '';
                         results.forEach((result, index) => {
@@ -233,6 +229,7 @@
                                 <div class="bg-gray-700 p-4 rounded-xl text-left flex justify-between items-center">
                                     <div>
                                         <p class="text-gray-300 font-semibold">${index + 1}. Platz: ${result.playerName}</p>
+                                        <p class="text-gray-500 text-sm">Mission ${result.mission}, Phase ${result.phase}</p>
                                     </div>
                                     <div>
                                         <p class="text-lime-400 text-xl font-bold">${displayTime}</p>
@@ -242,10 +239,10 @@
                             leaderboardResultsElement.innerHTML += resultHtml;
                         });
                     }
-                } catch (e) {
-                    console.error("Fehler beim Abrufen der Rangliste: ", e);
+                }, (error) => {
+                    console.error("Fehler beim Abrufen der Rangliste: ", error);
                     showMessage("Fehler beim Laden der Bestenliste.", 'bg-red-600');
-                }
+                });
             }
 
             function updateTipButtonText() {
@@ -324,13 +321,12 @@
                         showMessage("Fehler beim Speichern des Ergebnisses.", 'bg-red-600');
                     }
                     
-                    // Aktualisiere die Bestenliste mit den Ergebnissen der aktuellen Phase
-                    await updateLeaderboardDisplay(currentMission, solutionsSolved + 1);
+                    // Der Bestenlisten-Listener kümmert sich um das UI-Update
                     
                     phaseStartTime = timeInSeconds; // Startzeit für die nächste Phase zurücksetzen
 
                     solutionsSolved++;
-                    tipsGivenForCurrentSolution = 0; // Tipps für die nächste Lösung zurücksetzen
+                    tipsGivenForCurrentCurrent = 0; // Tipps für die nächste Lösung zurücksetzen
                     showMessage(`Richtig! "${loesung}" war die korrekte Lösung.`, 'bg-green-600');
                     loesungInput.value = '';
                     updateProgressDisplay();
