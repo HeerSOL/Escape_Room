@@ -25,7 +25,7 @@
 
     <!-- Bestenliste (versteckt bis Spielstart) -->
     <div id="leaderboard" class="bg-gray-800 p-8 md:p-12 rounded-2xl shadow-2xl leaderboard-container hidden">
-        <h2 class="text-2xl md:text-3xl font-bold text-teal-400 mb-4 text-center">Gesamtzeit pro Phase</h2>
+        <h2 id="leaderboard-title" class="text-2xl md:text-3xl font-bold text-teal-400 mb-4 text-center">Bestenliste</h2>
         <div id="leaderboard-results" class="space-y-4">
             <!-- Dynamisch generierte Ergebnisse werden hier eingefügt -->
         </div>
@@ -81,7 +81,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getFirestore, collection, addDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
         import { getAuth, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
 
         // Your web app's Firebase configuration
@@ -115,6 +115,7 @@
             const missionDisplay = document.getElementById('mission-display');
             const progressDisplay = document.getElementById('progress-display');
             const tipCostDisplay = document.getElementById('tip-cost-display');
+            const leaderboardTitle = document.getElementById('leaderboard-title');
 
             // Initialize Firebase services
             try {
@@ -187,23 +188,49 @@
                 updateTipButtonText();
             }
             
-            function updateLeaderboardDisplay() {
+            async function updateLeaderboardDisplay(mission, phase) {
+                leaderboardTitle.textContent = `Bestenliste für Mission ${mission}, Phase ${phase}`;
                 leaderboardResultsElement.innerHTML = ''; // Liste leeren
-                let totalTime = 0;
-                leaderboardResults.forEach((result, index) => {
-                    totalTime += result.time; // Kumuliert die Zeit
-                    const minutes = Math.floor(totalTime / 60);
-                    const seconds = totalTime % 60;
-                    const displayTime = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
-                    
-                    const resultHtml = `
-                        <div class="bg-gray-700 p-4 rounded-xl text-left">
-                            <p class="text-gray-300 font-semibold">Phase ${index + 1} abgeschlossen</p>
-                            <p class="text-lime-400 text-xl font-bold">Zeit: ${displayTime}</p>
-                        </div>
-                    `;
-                    leaderboardResultsElement.innerHTML += resultHtml;
-                });
+
+                const userId = auth.currentUser ? auth.currentUser.uid : 'anonymous';
+                const leaderboardRef = collection(db, `artifacts/${appId}/users/${userId}/leaderboard`);
+
+                const q = query(leaderboardRef, 
+                    where("mission", "==", mission),
+                    where("phase", "==", phase)
+                );
+                
+                try {
+                    const querySnapshot = await getDocs(q);
+                    const results = [];
+                    querySnapshot.forEach((doc) => {
+                        results.push(doc.data());
+                    });
+
+                    // Sortiere die Ergebnisse in aufsteigender Reihenfolge nach Zeit
+                    results.sort((a, b) => a.time - b.time);
+
+                    results.forEach((result, index) => {
+                        const minutes = Math.floor(result.time / 60);
+                        const seconds = result.time % 60;
+                        const displayTime = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                        
+                        const resultHtml = `
+                            <div class="bg-gray-700 p-4 rounded-xl text-left flex justify-between items-center">
+                                <div>
+                                    <p class="text-gray-300 font-semibold">${index + 1}. Platz: ${result.playerName}</p>
+                                </div>
+                                <div>
+                                    <p class="text-lime-400 text-xl font-bold">${displayTime}</p>
+                                </div>
+                            </div>
+                        `;
+                        leaderboardResultsElement.innerHTML += resultHtml;
+                    });
+                } catch (e) {
+                    console.error("Fehler beim Abrufen der Rangliste: ", e);
+                    showMessage("Fehler beim Laden der Bestenliste.", 'bg-red-600');
+                }
             }
 
             function updateTipButtonText() {
@@ -242,7 +269,6 @@
                 const expectedSolution = missionSolutions[currentMission][solutionsSolved];
 
                 if (loesung === expectedSolution) {
-                    // Zeit für die gelöste Phase berechnen
                     const phaseDuration = timeInSeconds - phaseStartTime;
                     
                     const newResult = {
@@ -251,8 +277,6 @@
                         time: phaseDuration,
                         playerName: playerNameInput.value || 'Anonym'
                     };
-                    leaderboardResults.push(newResult);
-                    updateLeaderboardDisplay();
                     
                     // Daten in Firestore speichern
                     try {
@@ -264,6 +288,9 @@
                         console.error("Fehler beim Hinzufügen des Dokuments: ", e);
                         showMessage("Fehler beim Speichern des Ergebnisses.", 'bg-red-600');
                     }
+                    
+                    // Aktualisiere die Bestenliste mit den Ergebnissen der aktuellen Phase
+                    await updateLeaderboardDisplay(currentMission, solutionsSolved + 1);
                     
                     phaseStartTime = timeInSeconds; // Startzeit für die nächste Phase zurücksetzen
 
