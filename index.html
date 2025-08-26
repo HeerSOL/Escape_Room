@@ -25,7 +25,7 @@
 
     <!-- Bestenliste (versteckt bis Spielstart) -->
     <div id="leaderboard" class="bg-gray-800 p-8 md:p-12 rounded-2xl shadow-2xl leaderboard-container hidden">
-        <h2 class="text-2xl md:text-3xl font-bold text-teal-400 mb-4 text-center">Bestzeiten pro Phase</h2>
+        <h2 class="text-2xl md:text-3xl font-bold text-teal-400 mb-4 text-center">Gesamtzeit pro Phase</h2>
         <div id="leaderboard-results" class="space-y-4">
             <!-- Dynamisch generierte Ergebnisse werden hier eingefügt -->
         </div>
@@ -189,15 +189,17 @@
             
             function updateLeaderboardDisplay() {
                 leaderboardResultsElement.innerHTML = ''; // Liste leeren
+                let totalTime = 0;
                 leaderboardResults.forEach((result, index) => {
-                    const minutes = Math.floor(result.time / 60);
-                    const seconds = result.time % 60;
-                    const phaseTime = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
+                    totalTime += result.time; // Kumuliert die Zeit
+                    const minutes = Math.floor(totalTime / 60);
+                    const seconds = totalTime % 60;
+                    const displayTime = `${minutes < 10 ? '0' : ''}${minutes}:${seconds < 10 ? '0' : ''}${seconds}`;
                     
                     const resultHtml = `
                         <div class="bg-gray-700 p-4 rounded-xl text-left">
                             <p class="text-gray-300 font-semibold">Phase ${index + 1} abgeschlossen</p>
-                            <p class="text-lime-400 text-xl font-bold">Zeit: ${phaseTime}</p>
+                            <p class="text-lime-400 text-xl font-bold">Zeit: ${displayTime}</p>
                         </div>
                     `;
                     leaderboardResultsElement.innerHTML += resultHtml;
