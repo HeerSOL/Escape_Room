@@ -140,6 +140,7 @@
             let solutionsSolved = 0;
             let tipsGivenForCurrentSolution = 0;
             const leaderboardResults = [];
+            const MAX_TIME = 60 * 60; // 60 Minuten in Sekunden
 
             // Definition der Lösungen für jede Mission
             const missionSolutions = {
@@ -167,13 +168,18 @@
                 ]
             };
 
-            // Tipp-Kosten: 30s, 1min, 1min30, 2min, 2min30, 3min, 3min30, 4min
-            const tipCosts = [30, 60, 90, 120, 150, 180, 210, 240];
+            // Tipp-Kosten: 30s, 1m, 2m, 3m, 5m, 7m, 9m, 15m
+            const tipCosts = [30, 60, 120, 180, 300, 420, 540, 900];
 
             function startTimer() {
                 timerInterval = setInterval(() => {
                     timeInSeconds++;
                     updateTimerDisplay();
+
+                    // Überprüfen, ob die maximale Zeit überschritten wurde
+                    if (timeInSeconds >= MAX_TIME) {
+                        endGame('time_up');
+                    }
                 }, 1000);
             }
 
@@ -263,6 +269,17 @@
                 tipButton.classList.add('opacity-50', 'cursor-not-allowed');
             }
 
+            function endGame(reason) {
+                clearInterval(timerInterval);
+                disableButtons();
+                if (reason === 'time_up') {
+                    showMessage('Die Zeit ist abgelaufen! Sie haben das Zeitlimit von 60 Minuten überschritten. Spiel vorbei.', 'bg-red-600');
+                } else {
+                    const finalTime = timerElement.textContent;
+                    showMessage(`Herzlichen Glückwunsch! Sie haben den Escape Room in ${finalTime} gelöst!`, 'bg-green-600');
+                }
+            }
+
             // Lösung prüfen
             checkButton.addEventListener('click', async () => {
                 const loesung = loesungInput.value.trim().toLowerCase();
@@ -310,10 +327,7 @@
                             setTimeout(updateProgressDisplay, 500); // UI-Update mit leichter Verzögerung
                         } else if (currentMission === 2) {
                             // Spielende
-                            clearInterval(timerInterval);
-                            const finalTime = timerElement.textContent;
-                            showMessage(`Herzlichen Glückwunsch! Sie haben den Escape Room in ${finalTime} gelöst!`, 'bg-green-600');
-                            disableButtons();
+                            endGame('mission_complete');
                         }
                     }
                 } else {
@@ -332,7 +346,7 @@
                     
                     const minutes = Math.floor(costInSeconds / 60);
                     const seconds = costInSeconds % 60;
-                    const costString = (minutes > 0 ? `${minutes}min ` : '') + (seconds > 0 ? `${seconds}s` : '');
+                    const costString = (minutes > 0 ? `${minutes}m ` : '') + (seconds > 0 ? `${seconds}s` : '');
                     
                     showMessage(`Ein Tipp wurde gewährt! ${costString} wurden zur Zeit hinzugefügt. ${currentTips[tipsGivenForCurrentSolution]}`, 'bg-yellow-600');
                     tipsGivenForCurrentSolution++;
